@@ -1,12 +1,16 @@
+#PURPOSE: Compute pairwise similarties of all possible pairs of students in the sample students given. 
+#OUTPUT: This returns a list of two objects:
+#        1) a list of all possible pairs of students (except self-pairs) and course-wise similarity
+#        2) the student record table returned a with a cluster number, from clustering set at lines 99 and 100.
+#To use:
+#Give this a student record (SR) table with all students of interest, and a course table (SC) with all their courses. 
+#
 #sr: must contain STDNT_ID
 #sc: must contain STDNT_ID,CRSE_ID_CD
 #both must be cleaned.
 #this will keep the subset of columns you select from SR.
 #keep cols: if set to NONE, keeps nothing from sr. Otherwise set to a vector of columns names to keep.
 #MIN_COURSE_SIZE: omit courses with total enrollment less than this (over the lifetime of the data set)
-#CLUSTERING: if set to to TRUE, clusters students with agglomerative clustering (Ward's D2),
-#            returns a list of student ID and cluster number, creates diagnostic plot.
-#cluster_level: tree height create clusters
 ##returns the result in a list with 2 elements
 #ll:  the full similarity matrix in tibble form for easy stats.
 #     for 6000 students in ~ 5000 courses this is > 33 x 10^6 rows.
@@ -14,13 +18,12 @@
 #     in the same order as was given.
 #
 #
-#EXAMPLE for UMich, beginning with the output of LARC.sql (
+#EXAMPLE for UMich, beginning with the output of LARC.sql, filtered.
 #temp <- basic_compute_pairwise(larc_sql_tab %>% select(STDNT_ID,CATLG_NBR,CRSE_ID_CD) %>% filter(CATLG_NBR < 500),
 #                               larc_sql_tab %>% filter(FIRST_TERM_ATTND_CD == 1660) %>% select(STDNT_ID) %>% distinct(STDNT_ID,.keep_all=TRUE))
 #
 ##########
-basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0,
-                                   CLUSTERING=TRUE,cluster_level=7,CLUSTER_DIAG=TRUE)
+basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0)
 {
   require(coop)
   require(tidyverse)
@@ -54,19 +57,18 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0,
   subsc <- left_join(CLIST,sc)
   
   #finally join the student course table with the student record table and compute some statistics
-  sc  <- left_join(sr1,subsc,by='STDNT_ID') %>% distinct(CRSE_ID_CD,STDNT_ID,.keep_all=TRUE) %>% 
+  sc  <- left_join(sr1,subsc) %>% distinct(CRSE_ID_CD,STDNT_ID,.keep_all=TRUE) %>% 
     mutate(TOT_STD_CRSE=n()) %>% mutate(TOT_STD=n_distinct(STDNT_ID)) %>% ungroup() %>%
     group_by(CRSE_ID_CD) %>% mutate(N_CRSE_ALL=n()) %>% ungroup() %>% drop_na(STDNT_ID)
   
-  #cut on course size (cut is at 0 by default), and add a course taken indicator
-  sc <- sc %>% filter(N_CRSE_ALL > MIN_COURSE_SIZE) %>% group_by(STDNT_ID,CRSE_ID_CD) %>% mutate(TAKEN_IND=n())
+  #cut on course size (cut is at 0 by default), and at a course taken indicator
+  sc <- sc %>% filter(N_CRSE_ALL > MIN_COURSE_SIZE) %>% mutate(TAKEN_IND=1)
   
   #create the input matrix for the similarlity calc
   sc <- sc %>% select(STDNT_ID,CRSE_ID_CD,TAKEN_IND) 
   tt <- sc %>% spread(CRSE_ID_CD,TAKEN_IND,fill=0) #fancy function from tidyverse finish the one-hot coding
   STDNT_ID <- as.character(pull(tt[,1],STDNT_ID))
   cos_input <- tt[,c(-1)] #drop the STDNT_ID column b/c we don't need it for the similarity calc.
-  print(str_c('using ',dim(cos_input)[2],' courses'))
   
   print('computing similarities')
   ll <- cosine(t(cos_input)) #from the "coop" package. need to do this efficiently.
@@ -81,7 +83,7 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0,
   
   #now add the original sr1 columns to this table for easy downstream analysis. 
   ll <- left_join(ll,sr1,by=c("ID"="STDNT_ID"))
-  #ll <- left_join(ll,sr1,by=c("PAIR"="STDNT_ID"),suffix=c('_ID','_PAIR'))
+  ll <- left_join(ll,sr1,by=c("PAIR"="STDNT_ID"),suffix=c('_ID','_PAIR'))
   
   len <- dim(ll)[1]
   
@@ -89,32 +91,24 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0,
   ll <- ll %>% filter(ID != PAIR)
   
   #create matrix for clustering, and assign studetns to clusters
-  if (CLUSTERING == TRUE)
-  {
-    print('doing clustering')
-    mm <- ll %>% select(ID,PAIR,SIM) %>% spread(PAIR,SIM,drop=FALSE)
-    mtx <- as.matrix(mm)
-    rownames(mtx) <- mtx[,1]
-    mtx <- as.dist(-1.0*(mtx[,-1]-1))
-    ss  <- hclust(mtx,method='ward.D2')
-    if (CLUSTER_DIAG==TRUE)
-    {
-      plot(ss)
-      lines(c(-100000,100000),c(cluster_level,cluster_level),col='red')
-    }
-    tt <- cutree(ss,h=cluster_level) 
-    
-    tt <- tibble(CL=tt,STDNT_ID=as.integer(names(tt))) #rearrange into a tibble
-    
-    
-    print(paste('created ',dim(tt %>% group_by(CL) %>% tally())[1], 'clusters'))
-    
-    sr1 <- left_join(sr1,tt,by='STDNT_ID')
-    return(list(ll,sr1))    
-  }
-
-  else
-  {
-  return(list(ll))
-  }
+  print('doing clustering')
+  mm <- ll %>% select(ID,PAIR,SIM) %>% spread(PAIR,SIM,drop=FALSE)
+  mtx <- as.matrix(mm)
+  rownames(mtx) <- mtx[,1]
+  mtx <- as.dist(-1.0*(mtx[,-1]-1))
+  ss  <- hclust(mtx,method='ward.D2')
+  tt <- cutree(ss,h=7) #cutting the tree at level 7, somewhat arbitrarily
+  tt <- tibble(CL=tt,STDNT_ID=as.integer(names(tt))) #rearrange into a tibble
+  
+  sr1 <- left_join(sr1,tt)
+  print(Sys.time())
+  
+  #return the result in a list
+  #ll:  the full similarity matrix in tibble form for easy stats.
+  #     for 6000 student in ~ 5000 courses this is > 33 x 10^6 rows.
+  #sr1: the assignment of students to clusters because it's fun. 
+  #     in the same order as was given.
+  
+  return(list(ll,sr1))
+  
 }
