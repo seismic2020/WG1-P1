@@ -1,7 +1,7 @@
 grade_anomaly_explore <- function(sr,sc,CRSE_SUBJECT='PHYSICS',CRSE_NUMBER = 140,CRSE_TERM=1.0,cluster_level=3.5)
 {
-  source("/Users/bkoester/Google Drive/code/Mellon/TOF/term_count.R")
-  source('~/Box Sync/SEISMIC/SEISMIC/SEISMIC/basic_compute_pairwise.R')
+  #source("/Users/bkoester/Google Drive/code/Mellon/TOF/term_count.R")
+  #source('~/Box Sync/SEISMIC/SEISMIC/SEISMIC/basic_compute_pairwise.R')
   
   require(tidyverse)
   #sr <- read_tsv("Box Sync/SEISMIC/SEISMIC_Data/student_record.tsv")
