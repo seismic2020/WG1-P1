@@ -12,28 +12,29 @@ Collaborators that want to can form their own institution-specific folders with 
 - Convert networks scripts to common data model
 - Convert course vectors scripts to common data model
 
-## Run the Grade Penalties Script (19-Apr-2020)
-#
-#PURPOSE: Consider one course at a time, one term. This returns various demographic
-#         breakdowns and returns plots that show differences in outcomes for single
-#         demographic variables: ethnicity, gender, lowinc, and first gen.
-#INPUT: see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
-#       sc - table of COURSE LEVEL VARIABLES 
-#       sr - table of STUDENT LEVEL VARIABLES 
-#       COURSE - the crs_name for the course to be studied
-#       TERM   - the crs_term for the course
-#       aggregate_terms - set to TRUE if you want to disregard term and aggregate over all.
-#OUTPUT: 1) This prints four plots the plot device (usually the plot view in RStudio)
-#        2) This returns a list, a variable containing 3 tables
-#        element 1: demographic statistics for the course by ethnicity, gender, LI, FG.
-#        element 2: grade penalty statistics by the Molinaro classification
-#        element 3: grade penalty statistics by the Fiorini classification
-#DEPENDENCIES: Must have tidyverse installed, must source the 'grade_penalty_functions.R'
-#              > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_functions.R'))
-#
-#EXAMPLE:
-#> kk <- grade_penalty_wg1_p1(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012')
-#> print(kk[[1]])
-#> print(kk[[2]])
-#> print(kk[[3]])
-##############################
+```
+### Run the Grade Penalties Script (19-Apr-2020)
+
+PURPOSE: Consider one course at a time, one term. This returns various demographic
+         breakdowns and returns plots that show differences in outcomes for single
+         demographic variables: ethnicity, gender, lowinc, and first gen.
+INPUT: see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
+       sc - table of COURSE LEVEL VARIABLES 
+       sr - table of STUDENT LEVEL VARIABLES 
+       COURSE - the crs_name for the course to be studied
+       TERM   - the crs_term for the course
+       aggregate_terms - set to TRUE if you want to disregard term and aggregate over all.
+OUTPUT: 1) This prints four plots the plot device (usually the plot view in RStudio)
+        2) This returns a list, a variable containing 3 tables
+        element 1: demographic statistics for the course by ethnicity, gender, LI, FG.
+        element 2: grade penalty statistics by the Molinaro classification
+        element 3: grade penalty statistics by the Fiorini classification
+DEPENDENCIES: Must have tidyverse installed, must source the 'grade_penalty_functions.R'
+              > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_functions.R'))
+
+EXAMPLE:
+> kk <- grade_penalty_wg1_p1(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012')
+> print(kk[[1]])
+> print(kk[[2]])
+> print(kk[[3]])
+```
