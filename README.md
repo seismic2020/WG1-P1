@@ -12,6 +12,8 @@ Collaborators that want to can form their own institution-specific folders with 
 - Convert networks scripts to common data model
 - Convert course vectors scripts to common data model
 
+## Examples
+### Grade Outcomes at the Course Level
 ```
 ### Run the Grade Penalties Script (19-Apr-2020)
 
