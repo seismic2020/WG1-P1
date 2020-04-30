@@ -9,10 +9,10 @@ grade_penalty_functions <- function()
   demographic_summary <- function(data)
   {
     #single variables
-    N_FEMALE <- length(which(data$gender == 1))
-    N_MALE   <- length(which(data$gender == 0))
-    N_GEN_UNK<- length(which(data$gender == 2))
-    N_GEN_NA <- length(which(is.na(data$gender)))
+    N_FEMALE <- length(which(data$female == 1))
+    N_MALE   <- length(which(data$female == 0))
+    N_GEN_UNK<- length(which(data$female == 2))
+    N_GEN_NA <- length(which(is.na(data$female)))
     
     N_ETH_0  <- length(which(data$ethniccode_cat == 0))
     N_ETH_1  <- length(which(data$ethniccode_cat == 1))
@@ -77,17 +77,17 @@ grade_penalty_functions <- function()
   #this computes and adds the fiorini coding to a table.
   add_fiorini_coding <- function(sr)
   {
-    sr <- sr %>% mutate(ui_firstgen=0,ui_gender=0,ui_urm=0,
-                        ui_fg_gen=0,ui_gen_urm=0,ui_fg_urm=0,ui_triple=0,ui_none=0)
+    sr <- sr %>% mutate(ui_firstgen=0,ui_female=0,ui_urm=0,
+                        ui_fg_fem=0,ui_fem_urm=0,ui_fg_urm=0,ui_triple=0,ui_none=0)
     
     sr$ui_firstgen[which(sr$firstgen == 1)] <- 1
-    sr$ui_gender[which(sr$gender == 1)] <- 1
+    sr$ui_female[which(sr$female == 1)] <- 1
     sr$ui_urm[which(sr$ethniccode_cat == 1)] <- 1
-    sr$ui_fg_gen[which(sr$firstgen == 1 & sr$gender == 1)] <- 1
+    sr$ui_fg_fem[which(sr$firstgen == 1 & sr$female == 1)] <- 1
     sr$ui_fg_urm[which(sr$firstgen == 1 & sr$ethniccode_cat == 1)] <- 1
-    sr$ui_gen_urm[which(sr$gender == 1 & sr$ethniccode_cat == 1)] <- 1
-    sr$ui_triple[which(sr$gender == 1 & sr$ethniccode_cat == 1 & sr$firstgen== 1)] <- 1  
-    sr$ui_none[which(sr$gender == 0 & sr$ethniccode_cat != 1 & sr$firstgen != 1)] <- 1
+    sr$ui_fem_urm[which(sr$female == 1 & sr$ethniccode_cat == 1)] <- 1
+    sr$ui_triple[which(sr$female == 1 & sr$ethniccode_cat == 1 & sr$firstgen== 1)] <- 1  
+    sr$ui_none[which(sr$female == 0 & sr$ethniccode_cat != 1 & sr$firstgen != 1)] <- 1
     
     return(sr)
     
@@ -99,14 +99,14 @@ grade_penalty_functions <- function()
     
     UI_FG      <- compute_column_group_statistics(sr %>% group_by(ui_firstgen)) %>% slice(2) %>% 
       select(-ui_firstgen) %>%  mutate(GROUP='FG')
-    UI_GENDER  <- compute_column_group_statistics(sr %>% group_by(ui_gender)) %>% slice(2) %>% 
-      select(-ui_gender) %>%  mutate(GROUP='FEM')
+    UI_female  <- compute_column_group_statistics(sr %>% group_by(ui_female)) %>% slice(2) %>% 
+      select(-ui_female) %>%  mutate(GROUP='FEM')
     UI_URM     <- compute_column_group_statistics(sr %>% group_by(ui_urm)) %>% slice(2)  %>% 
       select(-ui_urm) %>%  mutate(GROUP='URM')
-    UI_FG_GEN  <- compute_column_group_statistics(sr %>% group_by(ui_fg_gen)) %>% slice(2) %>% 
-      select(-ui_fg_gen) %>%  mutate(GROUP='FG_FEM')
-    UI_GEN_URM <- compute_column_group_statistics(sr %>% group_by(ui_gen_urm)) %>% slice(2) %>% 
-      select(-ui_gen_urm) %>%  mutate(GROUP='FEM_URM')
+    UI_FG_GEN  <- compute_column_group_statistics(sr %>% group_by(ui_fg_fem)) %>% slice(2) %>% 
+      select(-ui_fg_fem) %>%  mutate(GROUP='FG_FEM')
+    UI_GEN_URM <- compute_column_group_statistics(sr %>% group_by(ui_fem_urm)) %>% slice(2) %>% 
+      select(-ui_fem_urm) %>%  mutate(GROUP='FEM_URM')
     UI_FG_URM  <- compute_column_group_statistics(sr %>% group_by(ui_fg_urm)) %>% slice(2) %>% 
       select(-ui_fg_urm) %>%  mutate(GROUP='FG_URM')
     UI_TRIPLE  <- compute_column_group_statistics(sr %>% group_by(ui_triple)) %>% slice(2) %>% 
@@ -115,7 +115,7 @@ grade_penalty_functions <- function()
       select(-ui_none) %>%  mutate(GROUP='NONE')
     
     
-    out <- bind_rows(UI_FG,UI_GENDER,UI_URM,UI_FG_GEN,UI_GEN_URM,UI_FG_URM,UI_TRIPLE,UI_NONE)
+    out <- bind_rows(UI_FG,UI_female,UI_URM,UI_FG_GEN,UI_GEN_URM,UI_FG_URM,UI_TRIPLE,UI_NONE)
     out <- out  %>% select(GROUP,N,mean_grade,sd_grade,med_grade,mad_grade,mn_ga,sd_ga,med_ga,mad_ga)
     return(out)
   }
@@ -124,23 +124,32 @@ grade_penalty_functions <- function()
   #the group_by command has to be run before passing the data frame.
   compute_column_group_statistics <- function(data)
   {
-    res   <- data %>% summarize(N=n(),mean_grade=mean(numgrade),sd_grade=sd(numgrade),
-                                med_grade=median(numgrade),  mad_grade=mad(numgrade),
-                                mn_ga=mean(numgrade-gpao),sd_ga=sd(numgrade-gpao),
-                                med_ga=median(numgrade-gpao),mad_ga=mad(numgrade-gpao))
+    res   <- data %>% summarize(N=n(),mean_grade=mean(numgrade,na.rm=TRUE),sd_grade=sd(numgrade,na.rm=TRUE),
+                                med_grade=median(numgrade,na.rm=TRUE),  mad_grade=mad(numgrade,na.rm=TRUE),
+                                mn_ga=mean(numgrade-gpao,na.rm=TRUE),sd_ga=sd(numgrade-gpao,na.rm=TRUE),
+                                med_ga=median(numgrade-gpao,na.rm=TRUE),mad_ga=mad(numgrade-gpao,na.rm=TRUE))
     return(res)
   }
   
   #make a grade-gpao plots the ethnicity categories
-  make_eth_grade_gpao_plot <- function(data)
+  make_eth_grade_gpao_plot <- function(data,nohist=TRUE)
   {
+    if (nohist == FALSE)
+    {
+      p <- data %>% mutate(ETH=as.factor(ethniccode_cat)) %>% 
+        drop_na(ETH,numgrade-gpao) %>%
+        ggplot(aes(x=numgrade-gpao,fill=ETH))+
+        geom_histogram()+xlab('Grade-GPAO')
+      print(p)  
+    }
+    
     bin  <- cut_width(data$gpao,0.33) #make bins in GPAO every 0.33 points for plotting
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
     data <- data %>% mutate(bin=bin)  
     
     datap <- gpao.binned.urm(data)
     
-    datap <- datap %>% mutate(ETH=as.character(ethniccode_cat))
+    datap <- datap %>% mutate(ETH=as.character(ethniccode_cat)) %>% drop_na(ETH) 
     dodge <- position_dodge(width=0.2)
     
     p <- datap %>% ggplot(aes(x=bin, y=mnGRD, weight = 1/sqrt(seGRD),color=ETH)) + geom_point(position=dodge) + 
@@ -153,15 +162,23 @@ grade_penalty_functions <- function()
     print(p) 
   }
   
-  #make a grade-gpao plots the gender categories
-  make_gender_grade_gpao_plot <- function(data)
+  #make a grade-gpao plots the female categories
+  make_female_grade_gpao_plot <- function(data,nohist=TRUE)
   {
+    if (nohist == FALSE)
+    {
+      p <- data %>% mutate(FEMALE=as.factor(female)) %>% 
+        drop_na(FEMALE,numgrade-gpao) %>%
+        ggplot(aes(x=numgrade-gpao,fill=FEMALE))+
+        geom_histogram()+xlab('Grade-GPAO')
+      print(p)  
+    }
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
     data <- data %>% mutate(bin=bin)  
     
     datap <- gpao.binned.gndr(data)
-    datap <- datap %>% mutate(GNDR=as.character(gender))
+    datap <- datap %>% mutate(GNDR=as.character(female)) %>% drop_na(GNDR) 
     
     dodge <- position_dodge(width=0.2)
     
@@ -170,21 +187,30 @@ grade_penalty_functions <- function()
       geom_smooth(method='lm',formula=y ~ x,na.rm=TRUE,se=FALSE)+
       geom_abline(intercept=0,slope=1)+
       scale_y_continuous(limits = c(-0.5, 4))+
-      labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": Gender"))+
+      labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": female"))+
       theme(legend.position='right',text = element_text(size=20))
     print(p) 
     
   }
   
   #make a grade-gpao plots the firstgen categories
-  make_firstgen_grade_gpao_plot <- function(data)
+  make_firstgen_grade_gpao_plot <- function(data,nohist=TRUE)
   {
+    if (nohist == FALSE)
+    {
+      p <- data %>% mutate(FG=as.factor(firstgen)) %>% 
+        drop_na(FG,numgrade-gpao) %>%
+        ggplot(aes(x=numgrade-gpao,fill=FG))+
+        geom_histogram()+xlab('Grade-GPAO')
+      print(p)  
+    }
+    
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
     data <- data %>% mutate(bin=bin)  
     
     datap <- gpao.binned.first.gen(data)
-    datap <- datap %>% mutate(FG=as.character(firstgen))
+    datap <- datap %>% mutate(FG=as.character(firstgen)) %>% drop_na(FG) 
     
     dodge <- position_dodge(width=0.2)
     
@@ -200,14 +226,22 @@ grade_penalty_functions <- function()
   }
   
   #make a grade-gpao plots the lowinc categories
-  make_lowinc_grade_gpao_plot <- function(data)
+  make_lowinc_grade_gpao_plot <- function(data,nohist=TRUE)
   {
+    if (nohist == FALSE)
+    {
+      p <- data %>% mutate(LI=as.factor(lowincomflag)) %>% 
+                          ggplot(aes(x=numgrade-gpao,fill=LI))+
+           geom_histogram()+xlab('Grade-GPAO')
+      print(p)  
+    }
+    
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
     data <- data %>% mutate(bin=bin)  
     
     datap <- gpao.binned.lowinc(data)
-    datap <- datap %>% mutate(LI=as.character(lowincomflag))
+    datap <- datap %>% mutate(LI=as.character(lowincomflag))%>% drop_na(LI) 
     
     dodge <- position_dodge(width=0.2)
     
@@ -222,11 +256,11 @@ grade_penalty_functions <- function()
     
   }
   
-  #compute statistics by bin/gender
+  #compute statistics by bin/female
   gpao.binned.gndr <- function(data)
   {
     #scRES %>% group_by(STDNT_GNDR_SHORT_DES) %>% summarsize(meanGRD)
-    tt <- data %>% group_by(gender,bin) %>% 
+    tt <- data %>% group_by(female,bin) %>% 
       summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3))
     maxSE <- max(tt$seGRD,na.rm=TRUE)
     tt <- tt %>% replace_na(list(seGRD=maxSE))

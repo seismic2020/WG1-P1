@@ -24,12 +24,12 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
                 "firstgen"="FIRST_GEN",
                 "ethniccode"="STDNT_ETHNC_GRP_SHORT_DES",
                 "ethniccode_cat"="STDNT_DMSTC_UNDREP_MNRTY_CD",
-                "gender"="STDNT_GNDR_SHORT_DES",
+                "female"="STDNT_GNDR_SHORT_DES",
                 "famincome"="MEDINC",
                 "lowincomflag"="LI",
                 "transfer"="TRANSFER",
                 "international"="STDNT_INTL_IND",
-                "us_hs"="STDNT_INTL_IND",
+                "us_hs"="HS_PSTL_CD",
                 "cohort"="FIRST_TERM_ATTND_SHORT_DES",
                 "englsr"="MAX_ACT_ENGL_SCR",
                 "mathsr"="MAX_ACT_MATH_SCR",
@@ -59,7 +59,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
                 "tookcourse"="BLANK",
                 "apyear"="BLANK",
                 "apscore"="BLANK") 
-  
+      
       sr <- sr  %>% select(sr_names)
       sc <- sc  %>% select(sc_names)
       
@@ -67,12 +67,12 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
       sr$ethniccode_cat[sr$ethniccode == 'White' | sr$ethniccode == 'Not Indic'] <- 0
       sr$ethniccode_cat[sr$ethniccode == 'Asian'] <- 2
       
-      e1 <- which(sr$gender == 'Female')
-      e0 <- which(sr$gender == 'Male')
+      e1 <- which(sr$female == 'Female')
+      e0 <- which(sr$female == 'Male')
       
-      sr$gender <- 2 
-      sr$gender[e1] <- 1
-      sr$gender[e0] <- 0
+      sr$female <- 2 
+      sr$female[e1] <- 1
+      sr$female[e0] <- 0
       
       sc$crs_name <- str_c(sc$crs_sbj,sc$crs_catalog,sep=" ")
       
