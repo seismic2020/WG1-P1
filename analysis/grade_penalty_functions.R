@@ -145,7 +145,7 @@ grade_penalty_functions <- function()
     
     bin  <- cut_width(data$gpao,0.33) #make bins in GPAO every 0.33 points for plotting
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
-    data <- data %>% mutate(bin=bin)  
+    data <- data %>% mutate(bin=bin) %>% drop_na(numgrade,gpao)
     
     datap <- gpao.binned.urm(data)
     
@@ -175,7 +175,7 @@ grade_penalty_functions <- function()
     }
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
-    data <- data %>% mutate(bin=bin)  
+    data <- data %>% mutate(bin=bin) %>% drop_na(numgrade,gpao)
     
     datap <- gpao.binned.gndr(data)
     datap <- datap %>% mutate(GNDR=as.character(female)) %>% drop_na(GNDR) 
@@ -207,7 +207,7 @@ grade_penalty_functions <- function()
     
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
-    data <- data %>% mutate(bin=bin)  
+    data <- data %>% mutate(bin=bin) %>% drop_na(numgrade,gpao) 
     
     datap <- gpao.binned.first.gen(data)
     datap <- datap %>% mutate(FG=as.character(firstgen)) %>% drop_na(FG) 
@@ -238,7 +238,7 @@ grade_penalty_functions <- function()
     
     bin  <- cut_width(data$gpao,0.33)
     bin  <- as.numeric( sub("[^,]*,([^]]*)\\]", "\\1", bin))-0.33
-    data <- data %>% mutate(bin=bin)  
+    data <- data %>% mutate(bin=bin) %>% drop_na(numgrade,gpao)  
     
     datap <- gpao.binned.lowinc(data)
     datap <- datap %>% mutate(LI=as.character(lowincomflag))%>% drop_na(LI) 

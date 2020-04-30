@@ -1,4 +1,4 @@
-#
+######
 #PURPOSE: Consider one course at a time, one term. This returns various demographic
 #         breakdowns and returns plots that show differences in outcomes for single
 #         demographic variables: ethnicity, gender, lowinc, and first gen.
@@ -18,7 +18,9 @@
 #        element 3: grade penalty statistics by the Fiorini classification
 #        element 4: quantile regression coefficients and standard errors
 #        element 5: linear regression coefficients, standard errors, t-tests, p-vals
-#DEPENDENCIES: Must have tidyverse installed, must source the 'grade_penalty_functions.R'
+#DEPENDENCIES: Must source the 'grade_penalty_functions.R'
+#              Must have tidyverse installed
+#              Must have quantreg installed
 #              > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_functions.R'))
 #
 #EXAMPLE:
@@ -31,7 +33,7 @@
 #> print(kk[[5]])
 #> 
 # 2) Get summary statistics back for course, and run a regression using Molinaro categories:
-#> kk <- grade_penalty_wg1_p1(data[[1]],data[[2]] %>% drop_na(gpao,numgrade),
+#> kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
 #                             COURSE='PHYSICS 140',TERM='FA 2012',model=as.formula(numgrade ~ gpao+opp))
 #> print(kk[[4]])
 #> print(kk[[5]])
