@@ -136,8 +136,9 @@ grade_penalty_functions <- function()
   {
     if (nohist == FALSE)
     {
-      p <- data %>% mutate(ETH=as.factor(ethniccode_cat)) %>% 
-        drop_na(ETH,numgrade-gpao) %>%
+      print(names(data))
+      p <- data %>% mutate(ETH=as.factor(ethniccode_cat),diff=numgrade-gpao) %>% 
+        drop_na(ETH,diff) %>%
         ggplot(aes(x=numgrade-gpao,fill=ETH))+
         geom_histogram()+xlab('Grade-GPAO')
       print(p)  
@@ -167,8 +168,8 @@ grade_penalty_functions <- function()
   {
     if (nohist == FALSE)
     {
-      p <- data %>% mutate(FEMALE=as.factor(female)) %>% 
-        drop_na(FEMALE,numgrade-gpao) %>%
+      p <- data %>% mutate(FEMALE=as.factor(female),diff=numgrade-gpao) %>% 
+        drop_na(FEMALE,diff) %>%
         ggplot(aes(x=numgrade-gpao,fill=FEMALE))+
         geom_histogram()+xlab('Grade-GPAO')
       print(p)  
@@ -198,8 +199,8 @@ grade_penalty_functions <- function()
   {
     if (nohist == FALSE)
     {
-      p <- data %>% mutate(FG=as.factor(firstgen)) %>% 
-        drop_na(FG,numgrade-gpao) %>%
+      p <- data %>% mutate(FG=as.factor(firstgen),diff=numgrade-gpao) %>% 
+        drop_na(FG,diff) %>%
         ggplot(aes(x=numgrade-gpao,fill=FG))+
         geom_histogram()+xlab('Grade-GPAO')
       print(p)  
@@ -230,9 +231,10 @@ grade_penalty_functions <- function()
   {
     if (nohist == FALSE)
     {
-      p <- data %>% mutate(LI=as.factor(lowincomflag)) %>% 
-                          ggplot(aes(x=numgrade-gpao,fill=LI))+
-           geom_histogram()+xlab('Grade-GPAO')
+      p <- data %>% mutate(LI=as.factor(lowincomflag),diff=numgrade-gpao) %>% 
+                    drop_na(LI,diff) %>%
+                    ggplot(aes(x=numgrade-gpao,fill=LI))+
+                   geom_histogram()+xlab('Grade-GPAO')
       print(p)  
     }
     
