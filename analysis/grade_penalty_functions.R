@@ -157,7 +157,7 @@ grade_penalty_functions <- function()
       geom_errorbar(aes(ymin=mnGRD-seGRD, ymax=mnGRD+seGRD,color=ETH),position=dodge, width=0.09) + 
       geom_smooth(method='lm',formula=y ~ x,na.rm=TRUE,se=FALSE)+
       geom_abline(intercept=0,slope=1)+
-      scale_y_continuous(limits = c(-0.5, 4))+
+      coord_cartesian(ylim = c(-0.5, 4))+
       labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": ETHNIC_CODE"))+
       theme(legend.position='right',text = element_text(size=20))
     print(p) 
@@ -187,7 +187,7 @@ grade_penalty_functions <- function()
       geom_errorbar(aes(ymin=mnGRD-seGRD, ymax=mnGRD+seGRD,color=GNDR),position=dodge, width=0.09) + 
       geom_smooth(method='lm',formula=y ~ x,na.rm=TRUE,se=FALSE)+
       geom_abline(intercept=0,slope=1)+
-      scale_y_continuous(limits = c(-0.5, 4))+
+      coord_cartesian(ylim = c(-0.5, 4))+
       labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": female"))+
       theme(legend.position='right',text = element_text(size=20))
     print(p) 
@@ -219,7 +219,7 @@ grade_penalty_functions <- function()
       geom_errorbar(aes(ymin=mnGRD-seGRD, ymax=mnGRD+seGRD,color=FG),position=dodge, width=0.09) + 
       geom_smooth(method='lm',formula=y ~ x,na.rm=TRUE,se=FALSE)+
       geom_abline(intercept=0,slope=1)+
-      scale_y_continuous(limits = c(-0.5, 4))+
+      coord_cartesian(ylim = c(-0.5, 4))+
       labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": First Gen"))+
       theme(legend.position='right',text = element_text(size=20))
     print(p) 
@@ -251,7 +251,7 @@ grade_penalty_functions <- function()
       geom_errorbar(aes(ymin=mnGRD-seGRD, ymax=mnGRD+seGRD,color=LI),position=dodge, width=0.09) + 
       geom_smooth(method='lm',formula=y ~ x,na.rm=TRUE,se=FALSE)+
       geom_abline(intercept=0,slope=1)+
-      scale_y_continuous(limits = c(-0.5, 4))+
+      coord_cartesian(ylim = c(-0.5, 4))+
       labs(x='GPAO',y='Mean Grade')+labs(title=str_c(data$crs_name[1],": Low Income"))+
       theme(legend.position='right',text = element_text(size=20))
     print(p) 
