@@ -1,7 +1,7 @@
 wg1_p1_rename_umich_seismic <- function(sr,sc)
 {
-   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20190924.tab")
-   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20190924.tab") 
+   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20200129.tab")
+   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20200129.tab") 
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
@@ -10,7 +10,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
    sr <- sr %>% filter(FIRST_TERM_ATTND_CD >= 1210)
   
    sc <- term_count(sr,sc)
-   sc$SUM <- sc$TERMYR/2.0
+   sc$SUM <- sc$TERMYR/2.0-0.5
    
    sr <- sr %>% mutate(LI=0)
    sc <- sc %>% mutate(WD=0,RT=0,SEM=0,BLANK=NA)
@@ -75,7 +75,33 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
       sr$female[e0] <- 0
       
       sc$crs_name <- str_c(sc$crs_sbj,sc$crs_catalog,sep=" ")
+      sc <- flag_stem(sc)
       
     return(list(sr,sc))
   
 }
+
+flag_stem <- function(sc)
+{
+   #flag the stem courses
+   clist <- c('AERO','AEROSP','ANAT','ANATOMY','ANESTH','AOSS','APPPHYS','ASTRO','AUTO',
+              'BIOINF','BIOLCHEM','BIOLOGY','BIOMATLS','BIOMEDE','BIOPHYS','BIOSTAT',
+              'BOTANY','CANCBIO','CEE','CHE','CHEM','CHEMBIO','CLIMATE','CMPLXSYS','CMPTRSC', #COGSCI
+              'CS','EARTH','EEB','EECS','ENGR','ENSCEN','ENVIRON','ENVRNSTD','EPID','ESENG',
+              'GEOSCI','HUMGEN','IOE',
+              'MACROMOL','MATH','MATSCIE','MCDB','MECHENG','MEDCHEM','MEMS','MFG','MICROBIOL',
+              'NAVARCH','MILSCI','NAVSCI','NERS','NEUROL','NEUROSCI',
+              'PHARMACY','PHARMADM','PHARMCEU','PHARMCHM','PHARMCOG','PHARMSCI','PHYSICS','PHYSIOL',
+              'PIBS','PUBHLTH', #PYSCH
+              'RADIOL','SI','STATS','SPACE','ZOOLOGY')
+   
+   #clist <- c('MATH','PHYSICS','CHEM','BIOLOGY','STATS')
+   
+   ncrse        <- dim(sc)[1]
+   is_stem  <- mat.or.vec(ncrse,1)
+   e            <- sc$crs_sbj %in% clist
+   is_stem[e]   <- 1
+   data          <- as_tibble(data.frame(sc,is_stem))
+   return(data)
+}
+   
