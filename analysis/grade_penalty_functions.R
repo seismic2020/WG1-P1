@@ -35,9 +35,9 @@ grade_penalty_functions <- function()
     
   }
   
-  #this defines and adds the molinaro coding to a table.
-  #add the molinaro coding
-  add_molinaro_coding <- function(sr)
+  #this defines and adds the mutually exclusive coding to a table.
+  #add the mutually exclusive coding
+  add_ME_coding <- function(sr)
   {
     
     sr <- sr %>% mutate(opp='Other',opp_count=3)
@@ -45,28 +45,44 @@ grade_penalty_functions <- function()
     sr$opp[which(sr$firstgen == 1)] <- "FG"
     sr$opp[which(sr$ethniccode_cat == 1)] <- "URM"
     sr$opp[which(sr$lowincomflag == 1)] <- "LI"
+    sr$opp[which(sr$female == 1)] <- "FEM"
     
-    sr$opp[which(sr$firstgen == 1 & sr$lowincomflag == 1)] <- "FG&LI"
+    sr$opp[which(sr$firstgen == 1 & sr$lowincomflag == 1)]       <- "FG&LI"
     sr$opp[which(sr$ethniccode_cat == 1 & sr$lowincomflag == 1)] <- "URM&LI"
-    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1)] <- "URM&FG"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1)]     <- "URM&FG"
+    sr$opp[which(sr$firstgen == 1 & sr$female == 1)]             <- "FG&FEM"
+    sr$opp[which(sr$ethniccode_cat == 1 & sr$female == 1)]       <- "URM&FEM"
+    sr$opp[which(sr$lowincomflag == 1 & sr$female == 1)]       <- "LI&FEM"
+    
+    
+    sr$opp[which(sr$firstgen == 1 & sr$lowincomflag == 1 & sr$female == 1)]           <- "FG&LI&FEM"
+    sr$opp[which(sr$ethniccode_cat == 1 & sr$lowincomflag == 1 & sr$female == 1)]     <- "URM&LI&FEM"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1 & sr$female == 1)]         <- "URM&FG&FEM"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1 & sr$lowincomflag == 1)]   <- "URM&FG&LI"
     
     sr$opp[which(sr$ethniccode_cat == 0 &
                    sr$lowincomflag == 0 &
-                   sr$firstgen == 0)] <- "NotTriple"
-    
+                   sr$firstgen == 0 &   
+                   sr$female   == 0)] <- "NotQuad"
+
     sr$opp[which(sr$ethniccode_cat == 1 &
                    sr$lowincomflag == 1 &
-                   sr$firstgen == 1)] <- "Triple"
-    sr$opp_count[which(sr$opp == 'FG' | sr$opp == 'URM' | sr$opp == 'LI')] <- 2
-    sr$opp_count[which(sr$opp == 'FG&LI' | sr$opp == 'URM&LI' | sr$opp == 'URM&FG')] <- 1
-    sr$opp_count[which(sr$opp == 'Triple')] <- 0
+                   sr$firstgen == 1 & 
+                   sr$female == 1)] <- "Quad"
+    sr$opp_count[which(sr$opp == 'FG' | sr$opp == 'URM' | sr$opp == 'LI' | sr$opp == 'FEM')] <- 3
+    sr$opp_count[which(sr$opp == 'FG&LI' | sr$opp == 'URM&LI' | sr$opp == 'URM&FG' | 
+                       sr$opp == 'LI&FEM' | sr$opp == 'FG&FEM' | sr$opp == 'URM&FEM')] <- 2
+    sr$opp_count[which(sr$opp == 'FG&LI&FEM' | sr$opp == 'URM&LI&FEM' | 
+                         sr$opp == 'URM&FG&FEM' | sr$opp == 'URM&FG&LI')] <- 1
+    
+    sr$opp_count[which(sr$opp == 'Quad')] <- 0
     
     
     return(sr)
   }
   
-  #this computes summary statistics for the molinaro coding.
-  summarize_molinaro_statistics <- function(sr)
+  #this computes summary statistics for the mututally exclusivecoding.
+  summarize_ME_statistics <- function(sr)
   {
     out1 <- compute_column_group_statistics(sr %>% group_by(opp))
     out2 <- compute_column_group_statistics(sr %>% group_by(opp_count))
@@ -74,48 +90,85 @@ grade_penalty_functions <- function()
     out  <- bind_rows(out1,out2) 
   }
   
-  #this computes and adds the fiorini coding to a table.
-  add_fiorini_coding <- function(sr)
+  #this computes and adds the non mutatually exclusive coding to a table.
+  add_nonME_coding <- function(sr)
   {
-    sr <- sr %>% mutate(ui_firstgen=0,ui_female=0,ui_urm=0,
-                        ui_fg_fem=0,ui_fem_urm=0,ui_fg_urm=0,ui_triple=0,ui_none=0)
-    
+    sr <- sr %>% mutate(ui_firstgen=0,ui_female=0,ui_urm=0,ui_li=0,
+                        ui_fg_fem=0,ui_fem_urm=0,ui_fg_urm=0,ui_fg_li=0,ui_li_urm=0,ui_fem_li=0,
+                        ui_fg_fem_li=0,ui_fg_fem_urm=0,ui_fg_urm_li=0,ui_urm_li_fem=0,
+                        ui_quad=0,ui_none=0)
     sr$ui_firstgen[which(sr$firstgen == 1)] <- 1
     sr$ui_female[which(sr$female == 1)] <- 1
     sr$ui_urm[which(sr$ethniccode_cat == 1)] <- 1
+    sr$ui_li[which(sr$lowincomflag == 1)] <- 1
+    
     sr$ui_fg_fem[which(sr$firstgen == 1 & sr$female == 1)] <- 1
     sr$ui_fg_urm[which(sr$firstgen == 1 & sr$ethniccode_cat == 1)] <- 1
     sr$ui_fem_urm[which(sr$female == 1 & sr$ethniccode_cat == 1)] <- 1
-    sr$ui_triple[which(sr$female == 1 & sr$ethniccode_cat == 1 & sr$firstgen== 1)] <- 1  
-    sr$ui_none[which(sr$female == 0 & sr$ethniccode_cat != 1 & sr$firstgen != 1)] <- 1
+    sr$ui_fg_li[which(sr$firstgen == 1 & sr$lowincomflag == 1)] <- 1
+    sr$ui_li_urm[which(sr$lowincomflag == 1 & sr$ethniccode_cat == 1)] <- 1
+    sr$ui_fem_li[which(sr$female == 1 & sr$lowincomflag == 1)] <- 1
+    
+    sr$ui_fg_fem_li[which(sr$firstgen == 1 & sr$female == 1 & sr$lowincomflag == 1)] <- 1
+    sr$ui_fg_fem_urm[which(sr$firstgen == 1 & sr$ethniccode_cat == 1 & sr$female == 1)] <- 1
+    sr$ui_fg_urm_li[which(sr$female == 1 & sr$ethniccode_cat == 1 & sr$lowincomflag == 1)] <- 1
+    sr$ui_urm_li_fem[which(sr$ethniccode_cat == 1 & sr$lowincomflag == 1 & sr$female == 1)] <- 1
+    
+    
+    sr$ui_quad[which(sr$female == 1 & sr$ethniccode_cat == 1 & 
+                       sr$firstgen== 1 & sr$lowincomflag == 1)] <- 1  
+    sr$ui_none[which(sr$female == 0 & sr$ethniccode_cat != 1 & sr$firstgen != 1 & sr$lowincomflag != 1)] <- 1
     
     return(sr)
     
   }
   
   #this compute the fiorini statistics.
-  summarize_fiorini_statistics <- function(sr)
+  summarize_nonME_statistics <- function(sr)
   {
-    
     UI_FG      <- compute_column_group_statistics(sr %>% group_by(ui_firstgen)) %>% slice(2) %>% 
       select(-ui_firstgen) %>%  mutate(GROUP='FG')
     UI_female  <- compute_column_group_statistics(sr %>% group_by(ui_female)) %>% slice(2) %>% 
       select(-ui_female) %>%  mutate(GROUP='FEM')
     UI_URM     <- compute_column_group_statistics(sr %>% group_by(ui_urm)) %>% slice(2)  %>% 
       select(-ui_urm) %>%  mutate(GROUP='URM')
+    UI_LI      <- compute_column_group_statistics(sr %>% group_by(ui_li)) %>% slice(2)  %>% 
+      select(-ui_li) %>%  mutate(GROUP='LI')
+    
     UI_FG_GEN  <- compute_column_group_statistics(sr %>% group_by(ui_fg_fem)) %>% slice(2) %>% 
       select(-ui_fg_fem) %>%  mutate(GROUP='FG_FEM')
     UI_GEN_URM <- compute_column_group_statistics(sr %>% group_by(ui_fem_urm)) %>% slice(2) %>% 
       select(-ui_fem_urm) %>%  mutate(GROUP='FEM_URM')
     UI_FG_URM  <- compute_column_group_statistics(sr %>% group_by(ui_fg_urm)) %>% slice(2) %>% 
       select(-ui_fg_urm) %>%  mutate(GROUP='FG_URM')
-    UI_TRIPLE  <- compute_column_group_statistics(sr %>% group_by(ui_triple)) %>% slice(2) %>% 
-      select(-ui_triple) %>%  mutate(GROUP='TRIPLE')
+    UI_FG_LI  <- compute_column_group_statistics(sr %>% group_by(ui_fg_li)) %>% slice(2) %>% 
+      select(-ui_fg_li) %>%  mutate(GROUP='FG_LI')
+    UI_LI_URM <- compute_column_group_statistics(sr %>% group_by(ui_li_urm)) %>% slice(2) %>% 
+      select(-ui_li_urm) %>% mutate(GROUP='LI_URM')
+    UI_GEN_LI  <- compute_column_group_statistics(sr %>% group_by(ui_fem_li)) %>% slice(2) %>% 
+      select(-ui_fem_li) %>%  mutate(GROUP='GEN_LI')
+    
+    UI_FG_GEN_LI  <- compute_column_group_statistics(sr %>% group_by(ui_fg_fem_li)) %>% slice(2) %>% 
+      select(-ui_fg_fem_li) %>%  mutate(GROUP='FG_FEM_LI')
+    UI_FG_GEN_URM <- compute_column_group_statistics(sr %>% group_by(ui_fg_fem_urm)) %>% slice(2) %>% 
+      select(-ui_fg_fem_urm) %>%  mutate(GROUP='FG_FEM_URM')
+    UI_FG_URM_LI  <- compute_column_group_statistics(sr %>% group_by(ui_fg_urm_li)) %>% slice(2) %>% 
+      select(-ui_fg_urm_li) %>%  mutate(GROUP='FG_URM_LI')
+    UI_URM_LI_GEN  <- compute_column_group_statistics(sr %>% group_by(ui_urm_li_fem)) %>% slice(2) %>% 
+      select(-ui_urm_li_fem) %>%  mutate(GROUP='URM_LI_GEN')
+    
+    
+    UI_QUAD  <- compute_column_group_statistics(sr %>% group_by(ui_quad)) %>% slice(2) %>% 
+      select(-ui_quad) %>%  mutate(GROUP='QUAD')
     UI_NONE    <- compute_column_group_statistics(sr %>% group_by(ui_none)) %>% slice(2) %>% 
       select(-ui_none) %>%  mutate(GROUP='NONE')
     
     
-    out <- bind_rows(UI_FG,UI_female,UI_URM,UI_FG_GEN,UI_GEN_URM,UI_FG_URM,UI_TRIPLE,UI_NONE)
+    out <- bind_rows(UI_FG,UI_female,UI_URM,UI_LI,
+                     UI_FG_GEN,UI_GEN_URM,UI_FG_URM,
+                     UI_FG_LI,UI_LI_URM,UI_GEN_LI,
+                     UI_FG_GEN_LI,UI_FG_GEN_URM,UI_FG_URM_LI,UI_URM_LI_GEN,
+                     UI_QUAD,UI_NONE)
     out <- out  %>% select(GROUP,N,mean_grade,sd_grade,med_grade,mad_grade,mn_ga,sd_ga,med_ga,mad_ga)
     return(out)
   }

@@ -14,8 +14,8 @@
 #OUTPUT: 1) This prints four plots the plot device (usually the plot view in RStudio)
 #        2) This returns a list, a variable containing 3 tables
 #        element 1: demographic statistics for the course by ethnicity, gender, LI, FG.
-#        element 2: grade penalty statistics by the Molinaro classification
-#        element 3: grade penalty statistics by the Fiorini classification
+#        element 2: grade penalty statistics by the mutually exclusive classification
+#        element 3: grade penalty statistics by the non mututallyl......, exclusive classification
 #        element 4: quantile regression coefficients and standard errors
 #        element 5: linear regression coefficients, standard errors, t-tests, p-vals
 #DEPENDENCIES: Must source the 'grade_penalty_functions.R'
@@ -43,6 +43,8 @@
 # 29-Apr-2020: - Recoded gender --> female
 #              - added linear regression (GLM) and quantile regression (RQ) outputs
 #              - added explcit NA handling.
+# 28-May-2020: Added 4 dimensionas to analysis, renamed statistical outputs to
+#              'mutually exclusive' and 'non-mutually' exclusive.
 ##############################
 grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
                                  tau=0.5,model = as.formula(numgrade ~ gpao),
@@ -52,8 +54,8 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   require(quantreg)  #quantile regression
   #require(lme4)     #in case we do hierarchical MLE regression (e.g. within terms)
   
-  sr <- add_molinaro_coding(sr) #Add Molinaro-type columns to the data set
-  sr <- add_fiorini_coding(sr)  #Add Fiorini-type columns to the data set
+  sr <- add_ME_coding(sr) #Add Mmututally exclusive columns to the data set
+  sr <- add_nonME_coding(sr)  #Add non-mututally exclusive columns to the data set
   
   if (aggregate_terms == FALSE){sc <- sc %>% filter(crs_name == COURSE & crs_term == TERM)}  
   if (aggregate_terms == TRUE) {sc <- sc %>% filter(crs_name == COURSE)}  
@@ -65,8 +67,8 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   
   #compute simple grade penalty (grade-gpao) statistics for 
   #the different coding schemes.
-  ms <- summarize_molinaro_statistics(sc)
-  fs <- summarize_fiorini_statistics(sc)
+  ms <- summarize_ME_statistics(sc)
+  fs <- summarize_nonME_statistics(sc)
   
   #make one of each plot by the single categories
   aa <- make_eth_grade_gpao_plot(sc,nohist=nohist)
@@ -75,8 +77,8 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   aa <- make_lowinc_grade_gpao_plot(sc,nohist=nohist)
   
   #add the fiorini and molinaro coding for regression
-  sc <- add_fiorini_coding(sc)
-  sc <- add_molinaro_coding(sc)
+  sc <- add_nonME_coding(sc)
+  sc <- add_ME_coding(sc)
   
   #run regressions...in the future we will put these functions behind the scenes.
   jj  <- rq(model,tau=tau,sc,na.action=na.exclude)  #quantile regression
