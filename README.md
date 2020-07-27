@@ -13,8 +13,28 @@ Collaborators that want to can form their own institution-specific folders with 
 - Convert course vectors scripts to common data model
 
 ## Examples
-### Grade Outcomes at the Course Level
+
+### Run the Grade Penalties Script for all STEM
 ```
+#This runs as a wrapper, calling grade_penalty_wg1_p1.R
+#
+#It takes the same two tables as inputs.
+#
+#The Data Model has been updated to include a flag "is_stem", 
+#to indicate that a course is considered STEM by the user at
+#their institution. 
+#
+#INPUTS:
+#sr, sc: the student course and student record tables
+#crse_termcd_limit: The lower limit for TERM_CD of the cohort to include. 
+#                   It includes this term and all those after.
+#top10: let it the code try to identify and run on your top 10 courses by 
+#       enrollment of these students. WARNING: for reasons unknown the
+#       join required is super slow.
+##################################
+```
+
+### Grade Outcomes at the Course Level
 ### Run the Grade Penalties Script (19-Apr-2020)
 
 PURPOSE: Consider one course at a time, one term. This returns various demographic
