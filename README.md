@@ -21,7 +21,7 @@ PURPOSE: This runs as a wrapper, calling grade_penalty_wg1_p1.R as the engine.
 
 NOTES: The Data Model has been updated to include a flag "is_stem", 
 to indicate that a course is considered STEM by the user at
-their institution. 
+their institution. Be sure you've sourced grade_penalty_wg1_p1.R and grade_penalty_functions.R
 
 INPUTS:
 see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
@@ -31,6 +31,9 @@ crse_termcd_limit: The lower limit for TERM_CD of the cohort to include.
 top10: set this to true to let the code try to identify and run on your top 10 courses by 
        enrollment of these students. WARNING: for reasons unknown the
        join required is super slow. 
+       
+OUTPUTS:         
+       
 ```
 
 ### Grade Outcomes at the Course Level
