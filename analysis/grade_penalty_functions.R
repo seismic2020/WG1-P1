@@ -27,10 +27,20 @@ grade_penalty_functions <- function()
     N_FG_1  <- length(which(data$firstgen == 1))
     N_FG_NA <- length(which(is.na(data$firstgen )))
     
+    N_TR_0  <- length(which(data$transfer == 0))
+    N_TR_1  <- length(which(data$transfer == 1))
+    N_TR_NA <- length(which(is.na(data$transfer )))
+    
+    N_INT_0  <- length(which(data$international == 0))
+    N_INT_1  <- length(which(data$international == 1))
+    N_INT_NA <- length(which(is.na(data$international )))
+    
     out <- tibble(N_FEMALE,N_MALE,N_GEN_UNK,N_GEN_NA,
                   N_ETH_0,N_ETH_1,N_ETH_2,N_ETH_NA,
                   N_LI_0,N_LI_1,N_LI_NA,
-                  N_FG_0,N_FG_1,N_FG_NA)
+                  N_FG_0,N_FG_1,N_FG_NA,
+                  N_TR_0,N_TR_1,N_TR_NA,
+                  N_INT_0,N_INT_1,N_INT_NA)
     return(out)
     
   }
