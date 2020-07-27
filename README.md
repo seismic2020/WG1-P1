@@ -17,15 +17,14 @@ Collaborators that want to can form their own institution-specific folders with 
 ### Create a unified grade/grade anomaly for all top 10 STEM (27-July-2020).
 ```
 create_all_stem_layer.R:
-This runs as a wrapper, calling grade_penalty_wg1_p1.R
+PURPOSE: This runs as a wrapper, calling grade_penalty_wg1_p1.R as the engine.
 
-It takes the same two tables as inputs.
-
-The Data Model has been updated to include a flag "is_stem", 
+NOTES: The Data Model has been updated to include a flag "is_stem", 
 to indicate that a course is considered STEM by the user at
 their institution. 
 
 INPUTS:
+see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
 sr, sc: the student course and student record tables
 crse_termcd_limit: The lower limit for TERM_CD of the cohort to include. 
                    It includes this term and all those after.
