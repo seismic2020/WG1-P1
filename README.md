@@ -33,12 +33,17 @@ top10: set this to true to let the code try to identify and run on your top 10 c
        enrollment of these students. WARNING: for reasons unknown the
        join required is super slow. 
        
-OUTPUTS: Because it makes direct use of grade_penalty_wg1_p1.R below, that outputs are exactly the same and 
-         and be written locally (write_tsv or write_csv) and shared.
+OUTPUTS: Because it makes direct use of grade_penalty_wg1_p1.R below, outputs are exactly the same and 
+         and can be written locally (write_tsv or write_csv) and shared.
          
 DEPENDENCIES: Must have tidyverse installed, must source the following:
               > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_functions.R'))
               > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_wg1_p1.R'))
+EXAMPLE: 
+> kk <- create_all_stem_layer(sr,sc)
+> print(kk[[1]])
+> print(kk[[2]])
+> print(kk[[3]])
        
 ```
 
