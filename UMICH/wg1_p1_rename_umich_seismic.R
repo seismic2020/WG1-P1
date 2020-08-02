@@ -1,7 +1,7 @@
 wg1_p1_rename_umich_seismic <- function(sr,sc)
 {
-   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20200129.tab")
-   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20200129.tab") 
+   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20200527.tab")
+   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20200527.tab") 
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
@@ -17,7 +17,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
    sc$WD[which(sc$CRSE_GRD_OFFCL_CD == 'W')] <- 1
    sc$SEM[grep('S',sc$TERM_SHORT_DES)] <- 1
    
-   sr$LI[which(sr$MEDINC < 50000)] <- 1
+   sr$LI[which(sr$MEDINC < 40000)] <- 1
    
    
    sr_names <- c("st_id"="STDNT_ID",
@@ -63,14 +63,16 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
       sr <- sr  %>% select(sr_names)
       sc <- sc  %>% select(sc_names)
       
+      
       sr$ethniccode_cat <- 1
-      sr$ethniccode_cat[sr$ethniccode == 'White' | sr$ethniccode == 'Not Indic'] <- 0
-      sr$ethniccode_cat[sr$ethniccode == 'Asian'] <- 2
+      sr$ethniccode_cat[which(sr$ethniccode == 'White' | sr$ethniccode == 'Not Indic')] <- 0
+      sr$ethniccode_cat[which(sr$ethniccode == 'Asian')] <- 2
+      sr$ethniccode_cat[which(sr$ethniccode == '2 or More' | is.na(sr$ethniccode))] <- 3
       
       e1 <- which(sr$female == 'Female')
       e0 <- which(sr$female == 'Male')
       
-      sr$female <- 2 
+      sr$female <- NA 
       sr$female[e1] <- 1
       sr$female[e0] <- 0
       

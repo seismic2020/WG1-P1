@@ -13,10 +13,44 @@ Collaborators that want to can form their own institution-specific folders with 
 - Convert course vectors scripts to common data model
 
 ## Examples
-### Grade Outcomes at the Course Level
-```
-### Run the Grade Penalties Script (19-Apr-2020)
 
+### Create a unified grade/grade anomaly for all top 10 STEM (27-July-2020).
+```
+analysis/create_all_stem_layer.R:
+PURPOSE: This runs as a wrapper, calling grade_penalty_wg1_p1.R as the engine.
+
+NOTES: The Data Model has been updated to include a flag "is_stem", 
+to indicate that a course is considered STEM by the user at
+their institution. Be sure you've sourced grade_penalty_wg1_p1.R and grade_penalty_functions.R,
+both of which live in the analysis folder (see DEPENDENCIES below).
+
+INPUTS:
+see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
+sr, sc: the student course and student record tables
+crse_termcd_limit: The lower limit for TERM_CD of the cohort to include. 
+                   It includes this term and all those after.
+top10: set this to true to let the code try to identify and run on your top 10 courses by 
+       enrollment of these students. WARNING: for reasons unknown the
+       join required is super slow. 
+       
+OUTPUTS: Because it makes direct use of grade_penalty_wg1_p1.R below, outputs are exactly the same and 
+         and can be written locally (write_tsv or write_csv) and shared.
+         
+DEPENDENCIES: Must have tidyverse installed, must source the following:
+              > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_functions.R'))
+              > source(str_c(<PATH_TO_YOUR_CODE>,'/grade_penalty_wg1_p1.R'))
+EXAMPLE: 
+> kk <- create_all_stem_layer(sr,sc)
+> print(kk[[1]])
+> print(kk[[2]])
+> print(kk[[3]])
+       
+```
+
+### Grade Outcomes for a single course
+### Run the Grade Penalties Script (19-Apr-2020)
+```
+analysis/grade_penalty_wg1_p1.R
 PURPOSE: Consider one course at a time, one term. This returns various demographic
          breakdowns and returns plots that show differences in outcomes for single
          demographic variables: ethnicity, gender, lowinc, and first gen.
