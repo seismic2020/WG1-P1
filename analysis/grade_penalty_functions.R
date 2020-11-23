@@ -50,7 +50,7 @@ grade_penalty_functions <- function()
   add_ME_coding <- function(sr)
   {
     
-    sr <- sr %>% mutate(opp='Other',opp_count=3)
+    sr <- sr %>% mutate(opp='Other',opp_count=4)
     
     sr$opp[which(sr$firstgen == 1)] <- "FG"
     sr$opp[which(sr$ethniccode_cat == 1)] <- "URM"
@@ -367,5 +367,23 @@ grade_penalty_functions <- function()
     tt$seGRD[e  <- tt$seGRD == 0] <- maxSE 
     return(tt)
   }
+  
+  
+  boot_regression <- function(model,data)
+  {
+    library(boot)
+    results <- boot(data=data, statistic=boot_coeffs,
+                    R=1000, formula=model)
+    
+  }
+  
+  boot_coeffs <- function(formula, data, indices) 
+  {
+      d <- data[indices,] # allows boot to select sample
+      fit <- glm(formula, data=d)
+      return(coef(fit))
+    
+  }
+  
   
   

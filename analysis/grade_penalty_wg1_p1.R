@@ -11,6 +11,7 @@
 #       nohist - plot a grade-gpao histogram with each grade penalty plot. Default is TRUE, i.e. don't print one.
 #       tau    - a tunable parameter for the quantile regression, set to 0.5 (the median) by default.
 #       aggregate_terms - set to TRUE if you want to disregard term and aggregate over all.
+#       noplots - TRUE by default, will not output simple regression plots.
 #OUTPUT: 1) This prints four plots the plot device (usually the plot view in RStudio)
 #        2) This returns a list, a variable containing 3 tables
 #        element 1: demographic statistics for the course by ethnicity, gender, LI, FG.
@@ -47,10 +48,11 @@
 #              'mutually exclusive' and 'non-mutually' exclusive.
 # 27-July-2020: Added an explicit cut to remove international and transfer students from the grade 
 #               penalty and regression. Note the that they are still included in the first table.
+# 06-Nov-2020: Added in 'noplots' which silences the ouput regression plots.
 ##############################
 grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
                                  tau=0.5,model = as.formula(numgrade ~ gpao),
-                                 nohist=TRUE,aggregate_terms=FALSE)
+                                 nohist=TRUE,aggregate_terms=FALSE,noplots=TRUE)
 {
   require(tidyverse) #data handling
   require(quantreg)  #quantile regression
@@ -76,23 +78,28 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   fs <- summarize_nonME_statistics(sc)
   
   #make one of each plot by the single categories
-  aa <- make_eth_grade_gpao_plot(sc,nohist=nohist)
-  aa <- make_female_grade_gpao_plot(sc,nohist=nohist)
-  aa <- make_firstgen_grade_gpao_plot(sc,nohist=nohist)
-  aa <- make_lowinc_grade_gpao_plot(sc,nohist=nohist)
-  
+  if (noplots == FALSE)
+  {
+    aa <- make_eth_grade_gpao_plot(sc,nohist=nohist)
+    aa <- make_female_grade_gpao_plot(sc,nohist=nohist)
+    aa <- make_firstgen_grade_gpao_plot(sc,nohist=nohist)
+    aa <- make_lowinc_grade_gpao_plot(sc,nohist=nohist)
+  }
+
   #add the fiorini and molinaro coding for regression
   sc <- add_nonME_coding(sc)
   sc <- add_ME_coding(sc)
   
   #run regressions...in the future we will put these functions behind the scenes.
   jj  <- 1#rq(model,tau=tau,sc,na.action=na.exclude)  #quantile regression
-  jj2 <- glm(model,data=sc,na.action=na.exclude)    #straight up linear regression
+  jj2 <- glm(model,data=sc)    #straight up linear regression
   mtx_rq  <- summary(jj)[3][[1]] #pull the coeffiencts for the quantile reg
   mtx_glm <- coef(summary(jj2))  #...and for the glm
   
+  boot_glm <- boot_regression(model,sc)
+  
   #return the summary statistics
-  return(list(ds,ms,fs,mtx_rq,mtx_glm))
+  return(list(ds,ms,fs,mtx_rq,mtx_glm,boot_glm))
   #return(jj3)
 }
 

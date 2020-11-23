@@ -14,7 +14,7 @@
 #       enrollment of these students. WARNING: for reasons unknown the
 #       join required is super slow.
 ##################################
-create_all_stem_layer <- function(sr,sc,crse_termcd_limit=1760,top10=FALSE)
+create_all_stem_layer <- function(sr,sc,crse_termcd_limit=1760,top10=TRUE)
 {
     #select students in their first term, only STEM courses.
     sc <- sc %>% filter(enrl_from_cohort == 0.0 & is_stem == 1 & 
