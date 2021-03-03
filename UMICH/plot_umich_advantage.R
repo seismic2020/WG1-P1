@@ -2,8 +2,11 @@
 #data <- list(sr,sc)
 #Note that most of these are adapted to UMich courses.
 # source('~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/create_intro_bio_layer.R')
+# source('~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/create_all_stem_layer.R')
 # source('~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/grade_penalty_wg1_p1.R')
-# source('~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/grade_penalty_wg1_p1.R')
+# source('~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/grade_penalty_functions.R')
+#
+
 ###########
 
 plot_umich_advantage <- function(data)
@@ -43,8 +46,12 @@ big_wrapper <- function(data)
 {
   #qq <- plot_example_adv(data,clist=c('MATH 115'),title='ALL_STEM, FIRST YEAR',ALL_STEM=TRUE)
   
-  data[[2]] <- data[[2]] %>% filter(crs_termcd >= 1810) %>% 
-               group_by(crs_name) %>% mutate(N=n()) %>% filter(N > 1000)
+  data[[2]] <- data[[2]] %>% filter(crs_termcd >= 1760) %>% 
+               group_by(crs_name) %>% mutate(N=n()) %>% filter(N > 920)
+  
+  data[[2]] <- data[[2]] %>% filter(crs_component == 'LEC' & crs_termcd >= 1760)
+  sc_count  <- data[[2]] %>% group_by(crs_name) %>% tally() %>% top_n(250) %>% ungroup()
+  data[[2]]        <- data[[2]] %>% left_join(sc_count)
   
   #ncrse <- length(!duplicated(data[[2]]$crs_name))
   clist <- data[[2]]$crs_name[!duplicated(data[[2]]$crs_name)]
@@ -56,9 +63,10 @@ big_wrapper <- function(data)
     print(clist[i])
     if (!is.na(clist[i]))
     {
-    #  pdf(str_c('~/Desktop/advantage_plots/',clist[i],'.pdf',sep=""),width=11,height=7)
-    #    qq <- plot_example_adv(data,clist=clist[i],title=clist[i])
-    #  dev.off()
+      
+     pdf(str_c('~/Desktop/advantage_plots/',clist[i],'.pdf',sep=""),width=11,height=7)
+       qq <- plot_example_adv(data,clist=clist[i],title=clist[i])
+     dev.off()
     
       dd <- class_setup_heatmap(data,clist=clist[i])
       dd <- dd %>% select(opp,mean_grade,GROUP,N) %>% mutate(COURSE = clist[i])
@@ -344,7 +352,7 @@ setup_and_order_model_li <- function(kk)
 
 class_setup_heatmap <- function(data,clist='BIOLOGY 171')
 {
-  
+  data[[1]] <- data[[1]] %>% filter(international == 0)
   kk <- create_intro_bio_layer(data[[1]],data[[2]],BIOCOURSE=clist)
   kk[[2]] <- kk[[2]] %>% mutate(GROUP=case_when(opp == 'FEM' ~ '3', 
                                           opp == 'URM' ~ '3',
@@ -378,9 +386,31 @@ class_setup_heatmap <- function(data,clist='BIOLOGY 171')
                                           
 }
 
+#this takes output from big_wrapper for analysis
 opp_heatmap <- function(data)
 {
   library(gplots)
+  library(heatmaply)
+  #data$mean_grade[which(data$N < 10)] <- NA
+  st <- data %>% select(COURSE,opp,mean_grade) %>% pivot_wider(names_from='COURSE',values_from='mean_grade')
+  t  <- pull(st,opp)
+  st <- st %>% select(-opp)
+  jj <- data.matrix(st,rownames.force = TRUE) 
+  row.names(jj) <- t
+  st <- jj[c(1:17),] 
+  
+  #create a cellnote matrix with N's instead of the deault means.
+  nt <- data %>% select(COURSE,opp,N) %>% pivot_wider(names_from='COURSE',values_from='N')
+  
+  t  <- pull(nt,opp)
+  nt <- nt %>% select(-opp)
+  jj <- data.matrix(nt,rownames.force = TRUE) 
+  row.names(jj) <- t
+  nt <- jj[c(1:17),] 
+  
+  #i think this needs to be run at the command line to work.
+  #heatmaply(st)
   
   
+  return(list(st,nt))
 }

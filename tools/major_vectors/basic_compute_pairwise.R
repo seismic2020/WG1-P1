@@ -11,6 +11,7 @@
 #this will keep the subset of columns you select from SR.
 #keep cols: if set to NONE, keeps nothing from sr. Otherwise set to a vector of columns names to keep.
 #MIN_COURSE_SIZE: omit courses with total enrollment less than this (over the lifetime of the data set)
+#BY_SUBJECT: aggregate counts by subject and run subject-level similarity
 ##returns the result in a list with 2 elements
 #ll:  the full similarity matrix in tibble form for easy stats.
 #     for 6000 students in ~ 5000 courses this is > 33 x 10^6 rows.
@@ -23,7 +24,8 @@
 #                               larc_sql_tab %>% filter(FIRST_TERM_ATTND_CD == 1660) %>% select(STDNT_ID) %>% distinct(STDNT_ID,.keep_all=TRUE))
 #
 ##########
-basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0)
+basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0,
+                                   BY_SUBJECT=FALSE,BY_DIVISION=FALSE,CLUSTER=FALSE)
 {
   require(coop)
   require(tidyverse)
@@ -46,16 +48,30 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0)
   print('trimmed student record columns')
   
   #spits out a warning and exits if there are too many students (which maxes out the mem on my laptop)
-  if (dim(sr1)[1] > 6500){print('danger: > 6500 students'); return()}
+  print(dim(sr1))
+  if (dim(sr1)[1] > 6800){print('danger: > 6800 students'); return()}
+  
+  #count the number of courses in each subject
+  if (BY_SUBJECT == TRUE)
+  {
+    sc <- sc %>% group_by(STDNT_ID,SBJCT_CD) %>% mutate(SBJCT_CT=n()) %>% ungroup()
+    sc <- sc %>% mutate(CRSE_ID_CD=SBJCT_CD)
+  }
+  if (BY_DIVISION == TRUE)
+  {
+    sc <- sc %>% group_by(STDNT_ID,DIVISION) %>% mutate(SBJCT_CT=n()) %>% ungroup()
+    sc <- sc %>% mutate(CRSE_ID_CD=DIVISION)
+  }
   
   #this creates/cuts the list of courses that will considered for each student's courses vector.
   CLIST <- sc %>% distinct(CRSE_ID_CD) %>% select(CRSE_ID_CD)
+  print(str_c('selected ',dim(CLIST)[1],' courses'))
   
   print('cleaned student-course table to select courses')
   
   #Now, reduce the input student course table (sc) to include ONLY the courses that passed our cuts.
   subsc <- left_join(CLIST,sc)
-  
+    
   #finally join the student course table with the student record table and compute some statistics
   sc  <- left_join(sr1,subsc) %>% distinct(CRSE_ID_CD,STDNT_ID,.keep_all=TRUE) %>% 
     mutate(TOT_STD_CRSE=n()) %>% mutate(TOT_STD=n_distinct(STDNT_ID)) %>% ungroup() %>%
@@ -63,6 +79,8 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0)
   
   #cut on course size (cut is at 0 by default), and at a course taken indicator
   sc <- sc %>% filter(N_CRSE_ALL > MIN_COURSE_SIZE) %>% mutate(TAKEN_IND=1)
+  if (BY_SUBJECT == TRUE) {sc <- sc %>% mutate(TAKEN_IND=SBJCT_CT)}
+  if (BY_DIVISION == TRUE){sc <- sc %>% mutate(TAKEN_IND=SBJCT_CT)}
   
   #create the input matrix for the similarlity calc
   sc <- sc %>% select(STDNT_ID,CRSE_ID_CD,TAKEN_IND) 
@@ -91,16 +109,20 @@ basic_compute_pairwise <- function(sc,sr,keep_cols='NONE',MIN_COURSE_SIZE=0)
   ll <- ll %>% filter(ID != PAIR)
   
   #create matrix for clustering, and assign studetns to clusters
-  print('doing clustering')
-  mm <- ll %>% select(ID,PAIR,SIM) %>% spread(PAIR,SIM,drop=FALSE)
-  mtx <- as.matrix(mm)
-  rownames(mtx) <- mtx[,1]
-  mtx <- as.dist(-1.0*(mtx[,-1]-1))
-  ss  <- hclust(mtx,method='ward.D2')
-  tt <- cutree(ss,h=7) #cutting the tree at level 7, somewhat arbitrarily
-  tt <- tibble(CL=tt,STDNT_ID=as.integer(names(tt))) #rearrange into a tibble
+  if (CLUSTER == TRUE)
+  {
+    print('doing clustering')
+    mm <- ll %>% select(ID,PAIR,SIM) %>% spread(PAIR,SIM,drop=FALSE)
+    mtx <- as.matrix(mm)
+    rownames(mtx) <- mtx[,1]
+    mtx <- as.dist(-1.0*(mtx[,-1]-1))
+    ss  <- hclust(mtx,method='ward.D2')
+    tt <- cutree(ss,h=7) #cutting the tree at level 7, somewhat arbitrarily
+    tt <- tibble(CL=tt,STDNT_ID=as.integer(names(tt))) #rearrange into a tibble
   
-  sr1 <- left_join(sr1,tt)
+    sr1 <- left_join(sr1,tt)
+  }
+  
   print(Sys.time())
   
   #return the result in a list

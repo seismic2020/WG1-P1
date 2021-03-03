@@ -1,12 +1,15 @@
 wg1_p1_rename_umich_seismic <- function(sr,sc)
 {
-   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20200527.tab")
-   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20200527.tab") 
+   library(tidyverse)
+   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20210209.tab")
+   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20210209.tab") 
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
    sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
-                         !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210) 
+                         !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210 & 
+                          GRD_BASIS_ENRL_DES == 'Graded' & TERM_CD <= 2260) 
+   
    sr <- sr %>% filter(FIRST_TERM_ATTND_CD >= 1210)
   
    sc <- term_count(sr,sc)
@@ -14,7 +17,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
    
    sr <- sr %>% mutate(LI=0)
    sc <- sc %>% mutate(WD=0,RT=0,SEM=0,BLANK=NA)
-   sc$WD[which(sc$CRSE_GRD_OFFCL_CD == 'W')] <- 1
+   sc$WD[which(sc$CRSE_GRD_OFFCL_CD == 'W' | sc$GRD_PNTS_PER_UNIT_NBR <= 1.3)] <- 1
    sc$SEM[grep('S',sc$TERM_SHORT_DES)] <- 1
    
    sr$LI[which(sr$MEDINC < 40000)] <- 1
@@ -24,7 +27,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
                 "firstgen"="FIRST_GEN",
                 "ethniccode"="STDNT_ETHNC_GRP_SHORT_DES",
                 "ethniccode_cat"="STDNT_DMSTC_UNDREP_MNRTY_CD",
-                "female"="STDNT_GNDR_SHORT_DES",
+                "female"="STDNT_SEX_SHORT_DES",
                 "famincome"="MEDINC",
                 "lowincomflag"="LI",
                 "transfer"="TRANSFER",

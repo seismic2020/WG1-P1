@@ -19,6 +19,7 @@
 #        element 3: grade penalty statistics by the non mututallyl......, exclusive classification
 #        element 4: quantile regression coefficients and standard errors
 #        element 5: linear regression coefficients, standard errors, t-tests, p-vals
+#        element 6: measure of 4-dimensional course diversity 
 #DEPENDENCIES: Must source the 'grade_penalty_functions.R'
 #              Must have tidyverse installed
 #              Must have quantreg installed
@@ -32,7 +33,7 @@
 #> print(kk[[3]])
 #> print(kk[[4]])
 #> print(kk[[5]])
-#> 
+#> print(kk[[6]])
 # 2) Get summary statistics back for course, and run a regression using Molinaro categories:
 #> kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
 #                             COURSE='PHYSICS 140',TERM='FA 2012',model=as.formula(numgrade ~ gpao+opp))
@@ -49,6 +50,7 @@
 # 27-July-2020: Added an explicit cut to remove international and transfer students from the grade 
 #               penalty and regression. Note the that they are still included in the first table.
 # 06-Nov-2020: Added in 'noplots' which silences the ouput regression plots.
+# 3-Mar-2021:  Added DFW rates by group and also courwe diversity from Simpson's index.
 ##############################
 grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
                                  tau=0.5,model = as.formula(numgrade ~ gpao),
@@ -96,10 +98,14 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   mtx_rq  <- summary(jj)[3][[1]] #pull the coeffiencts for the quantile reg
   mtx_glm <- coef(summary(jj2))  #...and for the glm
   
-  boot_glm <- boot_regression(model,sc)
+  #boot_glm <- boot_regression(model,sc)
+  
+  #course diversity.
+  SIMP_DIV <- compute_diversity(sc)
   
   #return the summary statistics
-  return(list(ds,ms,fs,mtx_rq,mtx_glm,boot_glm))
+  
+  return(list(ds,ms,fs,mtx_rq,mtx_glm,SIMP_DIV))
   #return(jj3)
 }
 

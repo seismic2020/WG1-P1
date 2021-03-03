@@ -94,8 +94,8 @@ grade_penalty_functions <- function()
   #this computes summary statistics for the mututally exclusivecoding.
   summarize_ME_statistics <- function(sr)
   {
-    out1 <- compute_column_group_statistics(sr %>% group_by(opp))
-    out2 <- compute_column_group_statistics(sr %>% group_by(opp_count))
+    out1 <- compute_column_group_statistics(sr %>% group_by(opp)) %>% ungroup()
+    out2 <- compute_column_group_statistics(sr %>% group_by(opp_count)) %>% ungroup()
     out2 <- out2 %>% mutate(opp=as.character(opp_count)) %>% select(-opp_count)
     out  <- bind_rows(out1,out2) 
   }
@@ -136,8 +136,10 @@ grade_penalty_functions <- function()
   #this compute the fiorini statistics.
   summarize_nonME_statistics <- function(sr)
   {
+    UI_ALL     <- compute_column_group_statistics(sr) %>% 
+                  mutate(GROUP='ALL')
     UI_FG      <- compute_column_group_statistics(sr %>% group_by(ui_firstgen)) %>% slice(2) %>% 
-      select(-ui_firstgen) %>%  mutate(GROUP='FG')
+      select(-ui_firstgen) %>%  mutate(GROUP='FG') 
     UI_female  <- compute_column_group_statistics(sr %>% group_by(ui_female)) %>% slice(2) %>% 
       select(-ui_female) %>%  mutate(GROUP='FEM')
     UI_URM     <- compute_column_group_statistics(sr %>% group_by(ui_urm)) %>% slice(2)  %>% 
@@ -174,12 +176,13 @@ grade_penalty_functions <- function()
       select(-ui_none) %>%  mutate(GROUP='NONE')
     
     
-    out <- bind_rows(UI_FG,UI_female,UI_URM,UI_LI,
+    out <- bind_rows(UI_ALL,
+                     UI_FG,UI_female,UI_URM,UI_LI,
                      UI_FG_GEN,UI_GEN_URM,UI_FG_URM,
                      UI_FG_LI,UI_LI_URM,UI_GEN_LI,
                      UI_FG_GEN_LI,UI_FG_GEN_URM,UI_FG_URM_LI,UI_URM_LI_GEN,
                      UI_QUAD,UI_NONE)
-    out <- out  %>% select(GROUP,N,mean_grade,sd_grade,med_grade,mad_grade,mn_ga,sd_ga,med_ga,mad_ga)
+    out <- out  %>% select(GROUP,N,RATE_DFW,mean_grade,sd_grade,med_grade,mad_grade,mn_ga,sd_ga,med_ga,mad_ga)
     return(out)
   }
   
@@ -187,12 +190,34 @@ grade_penalty_functions <- function()
   #the group_by command has to be run before passing the data frame.
   compute_column_group_statistics <- function(data)
   {
-    res   <- data %>% summarize(N=n(),mean_grade=mean(numgrade,na.rm=TRUE),sd_grade=sd(numgrade,na.rm=TRUE),
+    res   <- data %>% summarize(N=n(),RATE_DFW=sum(numgrade_w,na.rm=TRUE)/N,
+                                mean_grade=mean(numgrade,na.rm=TRUE),sd_grade=sd(numgrade,na.rm=TRUE),
                                 med_grade=median(numgrade,na.rm=TRUE),  mad_grade=mad(numgrade,na.rm=TRUE),
                                 mn_ga=mean(numgrade-gpao,na.rm=TRUE),sd_ga=sd(numgrade-gpao,na.rm=TRUE),
-                                med_ga=median(numgrade-gpao,na.rm=TRUE),mad_ga=mad(numgrade-gpao,na.rm=TRUE))
-    return(res)
+                                med_ga=median(numgrade-gpao,na.rm=TRUE),mad_ga=mad(numgrade-gpao,na.rm=TRUE), 
+                                .groups = 'drop')
+    
+    return(res %>% ungroup())
   }
+  
+  #compute course diversity (by ethnicity, gender, first gen, and lowinc)
+  compute_diversity <- function(data)
+  {
+    
+    ss <- data %>% group_by(firstgen,ethniccode_cat,female,lowincomflag) %>% 
+      summarize(BigN=n(),.groups='keep') %>% arrange(desc(BigN))
+    N  <- dim(ss)[1]
+    ss <- ss %>% add_column(DEMCAT=1:N) 
+    data <- data %>% left_join(ss,by=c('firstgen','ethniccode_cat','female','lowincomflag'))
+    
+    SIMP_DIV <- ss %>% group_by(DEMCAT) %>% tally() %>%
+                summarize(COURSE_DIV=(sum(n^2)/sum(n)^2)^(1/(1-2)))
+                
+    return(pull(SIMP_DIV,'COURSE_DIV'))
+    
+    
+  }
+  
   
   #make a grade-gpao plots the ethnicity categories
   make_eth_grade_gpao_plot <- function(data,nohist=TRUE)
@@ -326,7 +351,7 @@ grade_penalty_functions <- function()
   {
     #scRES %>% group_by(STDNT_GNDR_SHORT_DES) %>% summarsize(meanGRD)
     tt <- data %>% group_by(female,bin) %>% 
-      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3))
+      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3),.groups = 'drop')
     maxSE <- max(tt$seGRD,na.rm=TRUE)
     tt <- tt %>% replace_na(list(seGRD=maxSE))
     tt$seGRD[e  <- tt$seGRD == 0] <- maxSE 
@@ -337,7 +362,7 @@ grade_penalty_functions <- function()
   gpao.binned.urm <- function(data)
   {
     tt <- data %>% group_by(ethniccode_cat,bin) %>% 
-      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3))
+      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3),.groups = 'drop')
     maxSE <- max(tt$seGRD,na.rm=TRUE)
     tt <- tt %>% replace_na(list(seGRD=maxSE))
     tt$seGRD[e  <- tt$seGRD == 0] <- maxSE 
@@ -349,7 +374,7 @@ grade_penalty_functions <- function()
   {
     #scRES %>% group_by(STDNT_GNDR_SHORT_DES) %>% summarsize(meanGRD)
     tt <- data %>% group_by(firstgen,bin) %>% 
-      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3))
+      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3),.groups = 'drop')
     maxSE <- max(tt$seGRD,na.rm=TRUE)
     tt <- tt %>% replace_na(list(seGRD=maxSE))
     tt$seGRD[e  <- tt$seGRD == 0] <- maxSE 
@@ -361,7 +386,7 @@ grade_penalty_functions <- function()
   {
     #scRES %>% group_by(STDNT_GNDR_SHORT_DES) %>% summarsize(meanGRD)
     tt <- data %>% group_by(lowincomflag,bin) %>% 
-      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3))
+      summarise(mnGRD=signif(mean(numgrade),3),seGRD=signif(sd(numgrade,na.rm=TRUE)/sqrt(n()),3),.groups = 'drop')
     maxSE <- max(tt$seGRD,na.rm=TRUE)
     tt <- tt %>% replace_na(list(seGRD=maxSE))
     tt$seGRD[e  <- tt$seGRD == 0] <- maxSE 

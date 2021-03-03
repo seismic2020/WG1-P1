@@ -22,6 +22,7 @@ create_intro_bio_layer <- function(sr,sc,crse_termcd_limit=1760,BIOCOURSE='BIOLO
                              model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
                                                 ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
                              aggregate=TRUE) #<-- this aggregates all terms!!
+  
   #ui_fg_fem+ui_fg_li+ui_fem_li
   #ui_fg_fem_li+ui_fg_fem_urm+ui_fg_urm_li+ui_urm_li_fem+ui_quad
   
