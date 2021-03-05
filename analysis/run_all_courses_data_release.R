@@ -4,7 +4,7 @@
 # student and course tables given, computes and orders the courses by enrollment, then returns the top N
 # by enrollment. As part of the "Data Release" model, for demographic groups and combinations thereof, 
 # it computes Ns, grade mean and sd, DFW rates, grade anomaly, and demographic diversity totalling out to 
-# over 100 variables.
+# over 100 variables. It *only* includes lectures at this point.
 #
 # INPUT: see https://docs.google.com/spreadsheets/d/1SzU4PcIEUsAGnKKyAcugHO2O2aZW29sf9a_cC-FAElk/edit#gid=1679989021
 #       sc - table of COURSE LEVEL VARIABLES 
@@ -16,6 +16,10 @@
 #              only the Ns will be masked.
 #       top - set this to the number of courses to keep, ranked from higher to lower by the 
 #             by the total enrollment.
+# Dependencies (compile these first):
+#       library(tidyverse)
+#       grade_penalty_functions.R
+#       grade_penalty_wg1_p1.R
 ###########
 
 run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE,top=250)
@@ -31,7 +35,7 @@ run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE
                                model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
                                                   ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
                                aggregate=TRUE) 
-    
+   
     cname <- pull(sc_count,crs_name)[i]
     
     res   <- kk[[3]] %>%  pivot_wider(names_from=GROUP,values_from=c(-GROUP))
@@ -49,6 +53,18 @@ run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE
       
     }
   }
+  
+  #finally run the whole data set and paste it on the end. Had to pull this out of the loop
+  #to run. 
+  sc <- sc %>% mutate(crs_name='STEM') %>% group_by(st_id) %>% sample_n(1) %>% ungroup()
+  kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
+                             COURSE='STEM',TERM='ALL',
+                             model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
+                                                ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,aggregate=TRUE) 
+  res   <- kk[[3]] %>% pivot_wider(names_from=GROUP,values_from=c(-GROUP))
+  cname <- 'ALL DATA'
+  res   <- res %>% add_column(COURSE=cname,.before='N_ALL') %>% add_column(SIMP_DIV=kk[[6]],.after='N_ALL')
+  out   <- bind_rows(out,res) %>% arrange(desc(N_ALL))
   
   out <- out %>% select(-contains(c('mad','med')))
   
