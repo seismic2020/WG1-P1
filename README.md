@@ -14,6 +14,22 @@ Collaborators that want to can form their own institution-specific folders with 
 
 ## Examples
 
+### Run the data release code (version 1, 27-March-2021)
+In this first version, the code takes your full student course and student record tables, including whatever courses and students happen to be in it, sorts them by total number of students enrolled in them over the entire data set, and then computes a range of Ns, grades, grade anomalies, and DFW rates for different demographic groups and their intersections. The top-level function is here:
+```
+analysis/run_all_courses_data_release.R
+```
+Read in the two tables according to data model.
+Then compile the dependencies and run the code as follows (see the header of the file for more details):
+ ```
+ > source(str_c(<PATH_TO_YOUR_CODE>,'analysis/grade_penalty_functions.R'))
+ > source(str_c(<PATH_TO_YOUR_CODE>,'analysis/grade_penalty_wg1_p1.R'))
+ > tab <- run_all_courses_data_release(sr,sc)
+ > write_tsv(tab,'~/Desktop/top250_courses.tab')
+```
+After writing this out, check that you're happy with any masking/privacy filtering that needs to be done.
+If it's good, then upload when you're ready.
+
 ### Create a unified grade/grade anomaly for all top 10 STEM (27-July-2020).
 ```
 analysis/create_all_stem_layer.R:
