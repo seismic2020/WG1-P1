@@ -24,10 +24,14 @@
 
 run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE,top=250)
 {
+  #get lectures within the range of terms we want
   sc <- sc %>% filter(crs_component == 'LEC' & crs_termcd >= crse_termcd_limit)
+  
+  #get the top N courses by total enrollment over this time.
   sc_count <- sc %>% group_by(crs_name) %>% tally() %>% top_n(top) %>% ungroup()
   sc <- sc %>% left_join(sc_count)
   
+  #now loop over the courses
   for (i in 1:top)
   {
     kk <- grade_penalty_wg1_p1(sr,sc, #%>% drop_na(gpao,numgrade), # commenting this out keeps the W's
@@ -36,13 +40,15 @@ run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE
                                                   ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
                                aggregate=TRUE) 
    
+    #extract what we need from the grade penalty structure.
     cname <- pull(sc_count,crs_name)[i]
-    
     res   <- kk[[3]] %>%  pivot_wider(names_from=GROUP,values_from=c(-GROUP))
-    
     res   <- res %>% add_column(COURSE=cname,.before='N_ALL') %>% add_column(SIMP_DIV=kk[[6]],.after='N_ALL')
+    
+    #print the course we just finished out to screen
     print(cname)
     
+    #append the new results onto the existing table unless the table hastn' been made yet.
     if (i == 1)
     {
       out <- res
@@ -55,7 +61,7 @@ run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE
   }
   
   #finally run the whole data set and paste it on the end. Had to pull this out of the loop
-  #to run. 
+  #to run. The steps here are identical to what's in the loop.
   sc <- sc %>% mutate(crs_name='STEM') %>% group_by(st_id) %>% sample_n(1) %>% ungroup()
   kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
                              COURSE='STEM',TERM='ALL',
@@ -66,6 +72,7 @@ run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE
   res   <- res %>% add_column(COURSE=cname,.before='N_ALL') %>% add_column(SIMP_DIV=kk[[6]],.after='N_ALL')
   out   <- bind_rows(out,res) %>% arrange(desc(N_ALL))
   
+  #get rid of the median and MAD to reduce column bloat.
   out <- out %>% select(-contains(c('mad','med')))
   
   #now if we're going to share this, we need to mask low counts

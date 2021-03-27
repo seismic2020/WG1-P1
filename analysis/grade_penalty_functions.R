@@ -190,7 +190,7 @@ grade_penalty_functions <- function()
   #the group_by command has to be run before passing the data frame.
   compute_column_group_statistics <- function(data)
   {
-    res   <- data %>% summarize(N=n(),RATE_DFW=sum(numgrade_w,na.rm=TRUE)/N,
+    res   <- data %>% summarize(N=n(),RATE_DFW=sum(is_dfw,na.rm=TRUE)/N,
                                 mean_grade=mean(numgrade,na.rm=TRUE),sd_grade=sd(numgrade,na.rm=TRUE),
                                 med_grade=median(numgrade,na.rm=TRUE),  mad_grade=mad(numgrade,na.rm=TRUE),
                                 mn_ga=mean(numgrade-gpao,na.rm=TRUE),sd_ga=sd(numgrade-gpao,na.rm=TRUE),
