@@ -53,29 +53,29 @@ grade_penalty_functions <- function()
     sr <- sr %>% mutate(opp='Other',opp_count=4)
     
     sr$opp[which(sr$firstgen == 1)] <- "FG"
-    sr$opp[which(sr$ethniccode_cat == 1)] <- "URM"
+    sr$opp[which(sr$ethniccode_cat != 0)] <- "URM"
     sr$opp[which(sr$lowincomflag == 1)] <- "LI"
     sr$opp[which(sr$female == 1)] <- "FEM"
     
     sr$opp[which(sr$firstgen == 1 & sr$lowincomflag == 1)]       <- "FG&LI"
-    sr$opp[which(sr$ethniccode_cat == 1 & sr$lowincomflag == 1)] <- "URM&LI"
-    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1)]     <- "URM&FG"
+    sr$opp[which(sr$ethniccode_cat  != 0 & sr$lowincomflag == 1)] <- "URM&LI"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat  != 0)]     <- "URM&FG"
     sr$opp[which(sr$firstgen == 1 & sr$female == 1)]             <- "FG&FEM"
-    sr$opp[which(sr$ethniccode_cat == 1 & sr$female == 1)]       <- "URM&FEM"
+    sr$opp[which(sr$ethniccode_cat != 0 & sr$female == 1)]       <- "URM&FEM"
     sr$opp[which(sr$lowincomflag == 1 & sr$female == 1)]       <- "LI&FEM"
     
     
     sr$opp[which(sr$firstgen == 1 & sr$lowincomflag == 1 & sr$female == 1)]           <- "FG&LI&FEM"
-    sr$opp[which(sr$ethniccode_cat == 1 & sr$lowincomflag == 1 & sr$female == 1)]     <- "URM&LI&FEM"
-    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1 & sr$female == 1)]         <- "URM&FG&FEM"
-    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat == 1 & sr$lowincomflag == 1)]   <- "URM&FG&LI"
+    sr$opp[which(sr$ethniccode_cat != 0 & sr$lowincomflag == 1 & sr$female == 1)]     <- "URM&LI&FEM"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat != 0 & sr$female == 1)]         <- "URM&FG&FEM"
+    sr$opp[which(sr$firstgen == 1 & sr$ethniccode_cat != 0 & sr$lowincomflag == 1)]   <- "URM&FG&LI"
     
     sr$opp[which(sr$ethniccode_cat == 0 &
                    sr$lowincomflag == 0 &
                    sr$firstgen == 0 &   
                    sr$female   == 0)] <- "NotQuad"
 
-    sr$opp[which(sr$ethniccode_cat == 1 &
+    sr$opp[which(sr$ethniccode_cat  != 0 &
                    sr$lowincomflag == 1 &
                    sr$firstgen == 1 & 
                    sr$female == 1)] <- "Quad"
@@ -210,7 +210,7 @@ grade_penalty_functions <- function()
     ss <- ss %>% add_column(DEMCAT=1:N) 
     data <- data %>% left_join(ss,by=c('firstgen','ethniccode_cat','female','lowincomflag'))
     
-    SIMP_DIV <- data %>% group_by(DEMCAT) %>% tally() %>%
+    SIMP_DIV <- data %>% group_by(DEMCAT) %>% select(-n) %>% tally() %>%
                 summarize(COURSE_DIV=(sum(n^2)/sum(n)^2)^(1/(1-2)))
                 
     return(pull(SIMP_DIV,'COURSE_DIV'))
