@@ -1,4 +1,4 @@
-wg1_p1_rename_umich_seismic <- function(sr,sc)
+wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
 {
    library(tidyverse)
    #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20210209.tab")
@@ -6,18 +6,29 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
-   sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
-                         !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210 & 
-                          GRD_BASIS_ENRL_DES == 'Graded' & TERM_CD <= 2260) 
-   
+   if (COVID == FALSE)
+   {
+      sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
+                            !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210 & 
+                            GRD_BASIS_ENRL_DES == 'Graded' & TERM_CD <= 2260) 
+   }
+   if (COVID == TRUE)
+   {
+      sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
+                             !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210 & 
+                             (GRD_BASIS_ENRL_DES == 'Graded' | grepl('COVID',GRD_BASIS_ENRL_DES,ignore.case=TRUE))) 
+      
+   }
+      
    sr <- sr %>% filter(FIRST_TERM_ATTND_CD >= 1210)
   
    sc <- term_count(sr,sc)
    sc$SUM <- sc$TERMYR/2.0-0.5
    
    sr <- sr %>% mutate(LI=0)
-   sc <- sc %>% mutate(WD=0,RT=0,SEM=0,BLANK=NA)
-   sc$WD[which(sc$CRSE_GRD_OFFCL_CD == 'W' | sc$GRD_PNTS_PER_UNIT_NBR <= 1.3)] <- 1
+   sc <- sc %>% mutate(WD=0,RT=0,SEM=0,BLANK=NA,IS_DFW=0)
+   sc$WD[which(sc$CRSE_GRD_OFFCL_CD == 'W')] <- 1
+   sc$IS_DFW[which(sc$CRSE_GRD_OFFCL_CD == 'W' | sc$GRD_PNTS_PER_UNIT_NBR <= 1.3)] <- 1
    sc$SEM[grep('S',sc$TERM_SHORT_DES)] <- 1
    
    sr$LI[which(sr$MEDINC < 40000)] <- 1
@@ -37,7 +48,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
                 "englsr"="MAX_ACT_ENGL_SCR",
                 "mathsr"="MAX_ACT_MATH_SCR",
                 "hsgpa"="HS_GPA",
-                "current_major"="DIVISION")
+                "current_major"="UM_DGR_1_MAJOR_1_DES")
    
    
       sc_names <- c("st_id"="STDNT_ID",
@@ -46,6 +57,7 @@ wg1_p1_rename_umich_seismic <- function(sr,sc)
                 "crs_name"="CRSE_ID_CD",
                 "numgrade"="GRD_PNTS_PER_UNIT_NBR",
                 "numgrade_w"="WD",
+                "is_dfw"="IS_DFW",
                 "crs_retake"="RT",
                 "crs_term"="TERM_SHORT_DES",
                 "crs_termcd"="TERM_CD",

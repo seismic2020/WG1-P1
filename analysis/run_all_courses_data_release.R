@@ -16,34 +16,45 @@
 #              only the Ns will be masked.
 #       top - set this to the number of courses to keep, ranked from higher to lower by the 
 #             by the total enrollment.
+#       by_term - if set to true, this will take the top 10 courses each and return a table with the stats 
+#                 for these courses by term instead of in aggregate.
 # Dependencies (compile these first):
 #       library(tidyverse)
 #       grade_penalty_functions.R
 #       grade_penalty_wg1_p1.R
 ###########
 
-run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE,top=250)
+run_all_courses_data_release <- function(sr,sc,crse_termcd_limit=1760,mask=FALSE,top=250,by_term=FALSE)
 {
   #get lectures within the range of terms we want
   sc <- sc %>% filter(crs_component == 'LEC' & crs_termcd >= crse_termcd_limit)
   
   #get the top N courses by total enrollment over this time.
-  sc_count <- sc %>% group_by(crs_name) %>% tally() %>% top_n(top) %>% ungroup()
+  if (by_term == FALSE){sc <- sc %>% mutate(crs_term='ALL')}
+
+  sc_count <- sc %>% group_by(crs_name,crs_term) %>% tally() %>% group_by(crs_term) %>% top_n(top) %>% ungroup()
+  top <- dim(sc_count)[1]
   sc <- sc %>% left_join(sc_count)
+  
   
   #now loop over the courses
   for (i in 1:top)
   {
+    #print(pull(sc_count,crs_name)[i])
+    #print(pull(sc_count,crs_term)[i])
     kk <- grade_penalty_wg1_p1(sr,sc, #%>% drop_na(gpao,numgrade), # commenting this out keeps the W's
-                               COURSE=pull(sc_count,crs_name)[i],TERM='ALL',
+                               COURSE=pull(sc_count,crs_name)[i],TERM=pull(sc_count,crs_term)[i],
                                model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
                                                   ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
-                               aggregate=TRUE) 
+                               aggregate=FALSE) 
    
     #extract what we need from the grade penalty structure.
     cname <- pull(sc_count,crs_name)[i]
+    term  <- pull(sc_count,crs_term)[i]
     res   <- kk[[3]] %>%  pivot_wider(names_from=GROUP,values_from=c(-GROUP))
-    res   <- res %>% add_column(COURSE=cname,.before='N_ALL') %>% add_column(SIMP_DIV=kk[[6]],.after='N_ALL')
+    res   <- res %>% add_column(COURSE=cname,.before='N_ALL') %>% 
+                     add_column(TERM=term,.after='COURSE') %>%
+                     add_column(SIMP_DIV=kk[[6]],.after='N_ALL')
     
     #print the course we just finished out to screen
     print(cname)
