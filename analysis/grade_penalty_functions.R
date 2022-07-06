@@ -87,6 +87,7 @@ grade_penalty_functions <- function()
     
     sr$opp_count[which(sr$opp == 'Quad')] <- 0
     
+    sr <- sr %>% mutate(sai=opp_count)
     
     return(sr)
   }
@@ -210,7 +211,7 @@ grade_penalty_functions <- function()
     ss <- ss %>% add_column(DEMCAT=1:N) 
     data <- data %>% left_join(ss,by=c('firstgen','ethniccode_cat','female','lowincomflag'))
     
-    SIMP_DIV <- data %>% group_by(DEMCAT) %>% select(-n) %>% tally() %>%
+    SIMP_DIV <- data %>% group_by(DEMCAT) %>%  tally() %>%
                 summarize(COURSE_DIV=(sum(n^2)/sum(n)^2)^(1/(1-2)))
                 
     return(pull(SIMP_DIV,'COURSE_DIV'))

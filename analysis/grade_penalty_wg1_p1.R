@@ -92,20 +92,31 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   sc <- add_nonME_coding(sc)
   sc <- add_ME_coding(sc)
   
+  #finally, add an actual grade penalty column to be tidy
+  sc <- sc %>% mutate(grade_penalty=numgrade-gpao)
+  
   #run regressions...in the future we will put these functions behind the scenes.
   jj  <- 1#rq(model,tau=tau,sc,na.action=na.exclude)  #quantile regression
   jj2 <- glm(model,data=sc)    #straight up linear regression
   mtx_rq  <- summary(jj)[3][[1]] #pull the coeffiencts for the quantile reg
   mtx_glm <- coef(summary(jj2))  #...and for the glm
   
+  #this isn't quite ready yet and it's far backburner
   #boot_glm <- boot_regression(model,sc)
+  
+  #run the t-test of sai=[0,3] vs sai = 4.
+  #this runs Welch's two-sample t-test
+  #https://en.wikipedia.org/wiki/Welch%27s_t-test
+  
+  sc <- sc %>% mutate(binary_sai=ifelse(sai==4,'HI','LO'))
+  ttest <- t.test(grade_penalty ~ binary_sai,data=sc)
   
   #course diversity.
   SIMP_DIV <- compute_diversity(sc)
   
   #return the summary statistics
   
-  return(list(ds,ms,fs,mtx_rq,mtx_glm,SIMP_DIV))
+  return(list(ds,ms,ttest,mtx_glm))
   #return(jj3)
 }
 

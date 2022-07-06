@@ -16,16 +16,44 @@ create_intro_bio_layer <- function(sr,sc,crse_termcd_limit=1760,BIOCOURSE='BIOLO
   sc <- sc %>% filter(crs_termcd >= crse_termcd_limit & crs_name %in% BIOCOURSE)
   sc <- sc %>% mutate(crs_name='INTRO')
   
-    
-  kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
+  #just the SAI
+  kk1 <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
                              COURSE='INTRO',INTRO,TERM='FA 2010',
-                             model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
-                                                ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
-                             aggregate=TRUE) #<-- this aggregates all terms!!
+                             model=as.formula(numgrade ~ opp_count),nohist=TRUE,aggregate=TRUE)
+  ##then the SAI + GPAO
+  kk2 <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
+                             COURSE='INTRO',INTRO,TERM='FA 2010',
+                             model=as.formula(numgrade ~ opp_count+gpao),nohist=TRUE,aggregate=TRUE)
+  ## then SAI+GPAO+HSGPA+ACT_MATH
+  kk3 <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
+                             COURSE='INTRO',INTRO,TERM='FA 2010',
+                             model=as.formula(numgrade ~ opp_count+gpao+mathsr+hsgpa),nohist=TRUE,aggregate=TRUE)
   
-  #ui_fg_fem+ui_fg_li+ui_fem_li
-  #ui_fg_fem_li+ui_fg_fem_urm+ui_fg_urm_li+ui_urm_li_fem+ui_quad
+   out <- list(kk1[[2]],kk1[[5]],kk2[[5]],kk3[[5]])                          
   
-  return(kk)
+  return(out)
+  
+}
+
+run_courses_and_plot <- function(data)
+{
+  clist <- c('BIOLOGY 171','BIOLOGY 172','BIOLOGY 173')
+  
+  for (i in 1:3)
+  {
+    print('*********')
+    print(clist[i])
+    kk <- create_intro_bio_layer(data[[1]],data[[2]],BIOCOURSE=clist[i])
+    p <- kk[[1]] %>% filter(opp %in% c('0','1','2','3')) %>% mutate(se=sd_grade/sqrt(N)) %>% 
+              ggplot(aes(x=opp,y=mean_grade,size=N))+geom_point()+
+              geom_errorbar(aes(ymin=mean_grade-se,ymax=mean_grade+se,size=1))+ggtitle(clist[i])+ylim(2,4)
+    print(p)
+    print(kk[[2]])
+    print(kk[[3]])
+    print(kk[[4]])
+    
+    
+  }
+  
   
 }

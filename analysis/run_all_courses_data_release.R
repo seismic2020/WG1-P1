@@ -16,7 +16,7 @@
 #              only the Ns will be masked.
 #       top - set this to the number of courses to keep, ranked from higher to lower by the 
 #             by the total enrollment.
-#       by_term - if set to true, this will take the top 10 courses each and return a table with the stats 
+#       by_term - if set to true, this will take the *top* enrolled courses each and return a table with the stats 
 #                 for these courses by term instead of in aggregate.
 # Dependencies (compile these first):
 #       library(tidyverse)

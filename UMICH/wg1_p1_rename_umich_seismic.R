@@ -1,8 +1,8 @@
 wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
 {
    library(tidyverse)
-   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20210209.tab")
-   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20210209.tab") 
+   #sc <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_COURSE_20220524.tab")
+   #sr <- read_tsv("/Users/bkoester/Box Sync/LARC.WORKING/BPK_LARC_STUDENT_RECORD_20220524.tab") 
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
@@ -11,6 +11,21 @@ wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
       sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
                             !grepl("M",TERM_SHORT_DES) & TERM_CD >= 1210 & 
                             GRD_BASIS_ENRL_DES == 'Graded' & TERM_CD <= 2260) 
+      #get the fall 2009-fall2019 cohorts, these are typically what we've been using.
+      #sr <- sr %>% filter(!grepl("M",FIRST_TERM_ATTND_SHORT_DES)) #no medical terms
+      sr <- sr %>% distinct(STDNT_ID,.keep_all=TRUE) %>% filter(grepl('^U',PRMRY_CRER_CD))
+      yrs <- seq(2009,2019)
+      nyrs <- length(yrs)
+      tms <- c('SU','FA','WN')
+      terms <- 'null'
+      
+      for (i in 1:3){for (j in 1:nyrs){terms <- c(terms,str_c(tms[i],yrs[j],sep=" "))}}
+      terms <- terms[!terms %in% c('null')]
+      print(dim(sr))
+      print(terms)
+      sr <- sr %>% filter(FIRST_TERM_ATTND_SHORT_DES %in% terms)
+      print(dim(sr))
+      
    }
    if (COVID == TRUE)
    {
@@ -21,7 +36,11 @@ wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
    }
       
    sr <- sr %>% filter(FIRST_TERM_ATTND_CD >= 1210)
-  
+   sc$CRSE_CMPNT_CD[which(sc$CRSE_CMPNT_CD %in% c('DIS','REC'))] <- 'LEC'
+   
+   #get rid of low credit stuff:
+   sc <- sc %>% filter(UNITS_ERND_NBR >= 3)
+   
    sc <- term_count(sr,sc)
    sc$SUM <- sc$TERMYR/2.0-0.5
    
@@ -101,18 +120,19 @@ wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
 flag_stem <- function(sc)
 {
    #flag the stem courses
-   clist <- c('AERO','AEROSP','ANAT','ANATOMY','ANESTH','AOSS','APPPHYS','ASTRO','AUTO',
-              'BIOINF','BIOLCHEM','BIOLOGY','BIOMATLS','BIOMEDE','BIOPHYS','BIOSTAT',
-              'BOTANY','CANCBIO','CEE','CHE','CHEM','CHEMBIO','CLIMATE','CMPLXSYS','CMPTRSC', #COGSCI
-              'CS','EARTH','EEB','EECS','ENGR','ENSCEN','ENVIRON','ENVRNSTD','EPID','ESENG',
-              'GEOSCI','HUMGEN','IOE',
-              'MACROMOL','MATH','MATSCIE','MCDB','MECHENG','MEDCHEM','MEMS','MFG','MICROBIOL',
-              'NAVARCH','MILSCI','NAVSCI','NERS','NEUROL','NEUROSCI',
-              'PHARMACY','PHARMADM','PHARMCEU','PHARMCHM','PHARMCOG','PHARMSCI','PHYSICS','PHYSIOL',
-              'PIBS','PUBHLTH', #PYSCH
-              'RADIOL','SI','STATS','SPACE','ZOOLOGY')
+   #clist <- c('AERO','AEROSP','ANAT','ANATOMY','ANESTH','AOSS','APPPHYS','ASTRO','AUTO',
+  #            'BIOINF','BIOLCHEM','BIOLOGY','BIOMATLS','BIOMEDE','BIOPHYS','BIOSTAT',
+  #            'BOTANY','CANCBIO','CEE','CHE','CHEM','CHEMBIO','CLIMATE','CMPLXSYS','CMPTRSC', #COGSCI
+  #            'CS','EARTH','EEB','EECS','ENGR','ENSCEN','ENVIRON','ENVRNSTD','EPID','ESENG',
+  #            'GEOSCI','HUMGEN','IOE',
+  #            'MACROMOL','MATH','MATSCIE','MCDB','MECHENG','MEDCHEM','MEMS','MFG','MICROBIOL',
+  #            'NAVARCH','MILSCI','NAVSCI','NERS','NEUROL','NEUROSCI',
+  #            'PHARMACY','PHARMADM','PHARMCEU','PHARMCHM','PHARMCOG','PHARMSCI','PHYSICS','PHYSIOL',
+  #            'PIBS','PUBHLTH', #PYSCH
+  #            'RADIOL','SI','STATS','SPACE','ZOOLOGY')
    
-   #clist <- c('MATH','PHYSICS','CHEM','BIOLOGY','STATS')
+   print('using short definition of STEM')
+   clist <- c('MATH','PHYSICS','CHEM','BIOLOGY','STATS','ENGIN')
    
    ncrse        <- dim(sc)[1]
    is_stem  <- mat.or.vec(ncrse,1)
