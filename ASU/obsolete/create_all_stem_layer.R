@@ -14,10 +14,10 @@
 #       enrollment of these students. WARNING: for reasons unknown the
 #       join required is super slow.
 ##################################
-create_all_stem_layer <- function(sr,sc,crse_termcd_limit=1760,top10=TRUE)
+create_all_stem_layer <- function(sr,sc,crse_termcd_limit=2097,top10=FALSE)
 {
     #select students in their first term, only STEM courses.
-    sc <- sc %>% filter(enrl_from_cohort == 0.0 & is_stem == 1 & 
+    sc <- sc %>% filter(enrl_from_cohort <= 3 & is_stem == 1 & 
                         crs_component == 'LEC' & crs_termcd >= crse_termcd_limit)
     
     if (top10 == TRUE)
@@ -34,7 +34,7 @@ create_all_stem_layer <- function(sr,sc,crse_termcd_limit=1760,top10=TRUE)
     
     #And go for it.
     kk <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
-                               COURSE='STEM',TERM='FA 2010',
+                               COURSE='STEM',TERM=2107,
                                model=as.formula(numgrade ~ ui_firstgen+ui_female+ui_urm+ui_li+
                                                 ui_fem_urm+ui_fg_urm+ui_li_urm+ui_none),nohist=TRUE,
                                aggregate=TRUE) #<-- this aggregates all terms!!
