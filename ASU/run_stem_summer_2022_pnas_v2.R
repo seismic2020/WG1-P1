@@ -54,7 +54,9 @@ run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=2097,crse
    stats   <- all_sai %>% group_by(sai,opp) %>% tally()
   
     #define the analysis sample
-    sc <- sc %>% filter(enrl_from_cohort < 1.0 & #those taking a course sometime in their first year
+    sc <- sc %>% filter(enrl_from_cohort < 10 & #those taking a course sometime in their first year
+    											# UNIQUE ASU CHANGE -- term codes are 4 digits and admit
+    											# terms are always summer
                         is_stem == 1 &           #courses must be STEM of some kind
                         crs_component == 'LEC' & #course must be lecture based
                         numgrade_w == 0 &        #we're explicitly excluding withdrawals!
