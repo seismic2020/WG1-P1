@@ -70,7 +70,6 @@ grade_penalty_wg1_p1 <- function(sr,sc,COURSE='PHYSICS 140',TERM='FA 2012',
   
   #compute N's by single demographic categories
   ds <- demographic_summary(sc)
-  
   #Now omit international students and transfers
   sc <- sc %>% filter(international == 0 & transfer == 0)
   

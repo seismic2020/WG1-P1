@@ -8,9 +8,9 @@
 #
 #SAMPLE
 #Student sample: 
-#               - non-int'l, non-transfer - institution must remove these, the code will not do it. 
-#               - from these, consider only students in first STEM course. Code will do this (but seem STEM course notes below)
-#               - create top 10 enrollment list from only first year students. Students will be chosen from these courses.
+#        - non-int'l, non-transfer - institution must remove these, the code will not do it. 
+#        - from these, consider only students in first STEM course. Code will do this (but seem STEM course notes below)
+#        - create top 10 enrollment list from only first year students. Students will be chosen from these courses.
 #Course sample - first, code will remove courses instances with a 'W' received - we can't do grade point calcs with this
 #        - institutions need to select their STEM subjects. As a reminder, we take STEM = (MATH,PHYSICS,CHEM,BIO,ENGIN,STATS).
 #          Please set the is_stem flag in the course table = 1.
@@ -38,12 +38,8 @@
 #       enrollment of these students. WARNING: for reasons unknown the
 #       join required is super slow.
 ##################################
-run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=1760,crse_termcd_upper_limit=2260,top10=TRUE)
+run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=9,crse_termcd_upper_limit=19,top10=TRUE,outputFilePath="~/")
 {
-  
-   #These scripts will need to be sourced wherever they are on your machine.  
-   source("~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/grade_penalty_wg1_p1.R")
-   source("~/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/analysis/grade_penalty_functions.R")
 
    #to accomplish (1), we will consider ALL students that entered between Fall 2009 and Fall 2019.
    #This should be all we need to do to define the sample, because transfers and int'l should already be removed,
@@ -56,7 +52,7 @@ run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=1760,crse
     #define the analysis sample
     sc <- sc %>% filter(enrl_from_cohort < 1.0 & #those taking a course sometime in their first year
                         is_stem == 1 &           #courses must be STEM of some kind
-                        crs_component == 'LEC' & #course must be lecture based
+                        crs_component == 'Lec' & #course must be lecture based
                         numgrade_w == 0 &        #we're explicitly excluding withdrawals!
                         crs_termcd >= crse_termcd_lower_limit & 
                         crs_termcd <= crse_termcd_upper_limit) #course must be in the term code range for Fall 2009-Fall 2019
@@ -76,9 +72,73 @@ run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=1760,crse
       print('Top 10 courses')
       View(sc_count)
     }
+    else{
+      sc_count <- sc %>% group_by(crs_name) %>% tally() %>% ungroup()
+    }
     
     #Random sample one course per student.
     sc <- sc %>% group_by(st_id) %>% sample_n(1) %>% ungroup()
+    
+    
+    
+    # __________ New Section to get info at course level before overall _____________
+    for (i in 1:10){
+      crs_temp <- sc_count[[i,1]]
+      kk_crs <- grade_penalty_wg1_p1(sr,sc %>% drop_na(gpao,numgrade),
+                                 COURSE=crs_temp,TERM='FA 2010',
+                                 model=as.formula(grade_penalty ~ sai),nohist=TRUE,
+                                 aggregate=TRUE) #<-- this aggregates all terms!!
+      crs_outputFileName <- paste(outputFilePath,"_",crs_temp,".csv",sep="")
+      
+      crs_outputFileName_txt <- paste(outputFilePath,"_",crs_temp,".txt",sep="")
+      # -------------------- Output -------------------- 
+      print(crs_temp)
+      print(kk_crs[[3]])
+      
+      # Start a sink file with a CSV extension
+      sink(crs_outputFileName)
+      
+      cat(institution)
+      cat('\n')
+      cat(paste('Data Ran on: ', currentDate))
+      cat('\n')
+      
+      cat('Overall Demographics')
+      cat('\n')
+      write.csv(kk_crs[[1]])
+      cat('\n')
+      cat('____________________________')
+      
+      cat('\n')
+      cat('\n')
+      
+      cat('Grade Anomalies and SAI')
+      cat('\n')
+      write.csv(kk_crs[[2]])
+      cat('\n')
+      cat('____________________________')
+      
+      
+      cat('\n')
+      cat('\n')
+      cat('Regression, grade penalty ~ sai')
+      cat('\n')
+      write.csv(kk_crs[[4]])
+      cat('\n')
+      cat('____________________________')
+      
+      cat('\n')
+      cat('\n')
+      # Close the sink
+      sink()
+      
+      chars <- capture.output(print(kk_crs[[3]]))
+      writeLines(chars,crs_outputFileName_txt )
+      
+    }
+    
+    # __________________________________________________________________________ 
+    
     
     #Rename the course STEM just to make the code happy.
     sc <- sc %>% mutate(crs_name='STEM')
@@ -96,7 +156,7 @@ run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=1760,crse
     #lots of list-passing here. taking everything apart and putting it together again.
     #Analysis outputs
     
-    output <- list(stats,kk[[2]],kk[[3]],kk[[4]])
+    output <- list(stats,kk[[2]],kk[[3]],kk[[4]],sc_count)
     
     #output follows the analysis questions above.
     #analysis 
@@ -105,6 +165,7 @@ run_stem_summer_2022_pnas_v2 <- function(sr,sc,crse_termcd_lower_limit=1760,crse
     #question 3 t-test of low and hi sai: output[[3]]
     #question 4 regression, grade_penalty ~ sai: output[[4]]
     #question 5: student sample sai: output[[2]]
+
 
     return(output)
   
