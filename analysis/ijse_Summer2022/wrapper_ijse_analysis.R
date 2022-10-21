@@ -15,8 +15,13 @@ source("~/Documents/GitHub/SEISMIC/analysis_PNAS_V2/run_stem_summer_2022_pnas_v2
 srFileName <- "~/Documents/GitHub/SEISMIC/analysis_PNAS_V2/data/sr.csv"
 scFileName <- "~/Documents/GitHub/SEISMIC/analysis_PNAS_V2/data/sc.csv"
 
-# Update to the folder where it will write
-outputFileName <- "~/Documents/GitHub/SEISMIC/analysis_PNAS_V2/output_MSU.csv"
+# Update to the folder where output files will be written
+
+outputFilePath <- "~/Documents/GitHub/SEISMIC/analysis_PNAS_V2/output_MSU"
+outputFileName <- paste(outputFilePath,".csv",sep="")
+outputFileName_txt <- paste(outputFilePath,".txt",sep="")
+
+
 
 # Update to your institution 
 institution <- 'MSU'
@@ -31,6 +36,9 @@ crse_termcd_upper_limit <- 19
 # No update here
 currentDate <- Sys.Date()
 
+# We want the top 10 courses
+top10 <- TRUE
+
 # Reading in your data
 sr <- read.csv(srFileName, header = TRUE)
 sc <- read.csv(scFileName, header = TRUE)
@@ -38,7 +46,7 @@ sc <- read.csv(scFileName, header = TRUE)
 # If you have DFW in your data set, then comment out this line
 sc <- mutate(sc, is_dfw = 0)
 
-output <- run_stem_summer_2022_pnas_v2(sr,sc, crse_termcd_lower_limit, crse_termcd_upper_limit)
+output <- run_stem_summer_2022_pnas_v2(sr,sc, crse_termcd_lower_limit, crse_termcd_upper_limit,top10, outputFilePath)
 
 # -------------------- Output -------------------- 
 
@@ -65,14 +73,6 @@ write.csv(output[[2]])
 cat('\n')
 cat('____________________________')
 
-cat('\n')
-cat('\n')
-
-cat('T-test')
-cat('\n')
-capture.output(print(output[[3]]))
-cat('\n')
-cat('____________________________')
 
 cat('\n')
 cat('\n')
@@ -84,7 +84,19 @@ cat('____________________________')
 
 cat('\n')
 cat('\n')
+
+cat('Top 10 courses')
+cat('\n')
+write.csv(output[[5]])
+cat('\n')
+cat('____________________________')
+
 # Close the sink
 sink()
+
+
+# Writing out the t-test
+chars <- capture.output(print(output[[3]]))
+writeLines(chars,outputFileName_txt )
 
 
