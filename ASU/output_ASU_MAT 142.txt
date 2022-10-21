@@ -1,0 +1,12 @@
+
+	Welch Two Sample t-test
+
+data:  grade_penalty by binary_sai
+t = 2.5753, df = 1513.3, p-value = 0.01011
+alternative hypothesis: true difference in means between group HI and group LO is not equal to 0
+95 percent confidence interval:
+ 0.01916513 0.14166466
+sample estimates:
+mean in group HI mean in group LO 
+      -0.3735871       -0.4540020 
+
