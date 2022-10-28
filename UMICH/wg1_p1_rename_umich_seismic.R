@@ -6,6 +6,10 @@ wg1_p1_rename_umich_seismic <- function(sr,sc,COVID=FALSE)
    
    source('/Users/bkoester/Google Drive/code/SEISMIC/SEISMIC2020/WG1-P1/UMICH/term_count.R')
   
+   #fix STATS 250
+   e <- which(sc$CRSE_ID_CD == '001957')
+   sc$CATLG_NBR[e] <- 250
+  
    if (COVID == FALSE)
    {
       sc <- sc %>% filter(grepl("^U",PRMRY_CRER_CD) & !grepl("S",TERM_SHORT_DES) & 
